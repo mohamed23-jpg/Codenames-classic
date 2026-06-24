@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a1e" />
+  <title>Codenames Classic - لعبة الجواسيس</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+  <link rel="apple-touch-icon" href="assets/images/favicon.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+
+<!-- تحذير الوضع الرأسي -->
+<div id="rotate-warning">
+  <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5">
+    <rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>
+  </svg>
+  <p>يُرجى تدوير الجهاز إلى الوضع الأفقي للحصول على أفضل تجربة</p>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- ===== شاشة تسجيل الدخول ===== -->
+<div id="screen-login" class="screen">
+  <div class="login-container">
+    <div class="login-logo-area">
+      <!-- شعار SVG محسّن: حرف O كعدسة -->
+      <svg class="game-logo-svg" viewBox="0 0 300 90" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gr" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#ff0040"/>
+            <stop offset="100%" style="stop-color:#e00030"/>
+          </linearGradient>
+          <linearGradient id="gb" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#00d4ff"/>
+            <stop offset="100%" style="stop-color:#0090cc"/>
+          </linearGradient>
+          <filter id="glow-r"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-b"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <!-- CODE -->
+        <text x="10" y="52" font-family="Orbitron,monospace" font-weight="900" font-size="42" fill="url(#gr)" filter="url(#glow-r)">C</text>
+        <!-- حرف O كعدسة/scope -->
+        <circle cx="76" cy="34" r="22" fill="none" stroke="#ffd700" stroke-width="4" filter="url(#glow-r)"/>
+        <circle cx="76" cy="34" r="14" fill="none" stroke="#ffd700" stroke-width="2" opacity="0.6"/>
+        <circle cx="76" cy="34" r="4" fill="#ffd700"/>
+        <line x1="76" y1="8" x2="76" y2="16" stroke="#ffd700" stroke-width="2.5"/>
+        <line x1="76" y1="52" x2="76" y2="60" stroke="#ffd700" stroke-width="2.5"/>
+        <line x1="50" y1="34" x2="58" y2="34" stroke="#ffd700" stroke-width="2.5"/>
+        <line x1="94" y1="34" x2="102" y2="34" stroke="#ffd700" stroke-width="2.5"/>
+        <text x="104" y="52" font-family="Orbitron,monospace" font-weight="900" font-size="42" fill="url(#gr)" filter="url(#glow-r)">DE</text>
+        <!-- NAMES -->
+        <text x="15" y="78" font-family="Orbitron,monospace" font-weight="700" font-size="28" fill="url(#gb)" filter="url(#glow-b)" letter-spacing="8">NAMES</text>
+        <!-- CLASSIC -->
+        <text x="225" y="78" font-family="Orbitron,monospace" font-weight="400" font-size="11" fill="#ffd700" letter-spacing="3" opacity="0.85">CLASSIC</text>
+      </svg>
+      <div class="login-tagline">لعبة الجواسيس الاستراتيجية</div>
+    </div>
+
+    <p class="login-game-desc">اختر فريقك، أرسل التلميحات، واكشف هوية الجواسيس قبل الخصم</p>
+
+    <div class="login-features">
+      <span class="login-feature-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        ضد بشر
+      </span>
+      <span class="login-feature-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        وضع سولو وزوجي
+      </span>
+      <span class="login-feature-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        متعدد اللاعبين
+      </span>
+    </div>
+
+    <div class="login-field">
+      <label>اسم المستخدم</label>
+      <input id="login-nickname" type="text" placeholder="أدخل اسمك..." maxlength="20" autocomplete="off" />
+    </div>
+
+    <div class="avatar-section">
+      <div class="avatar-section-label">اختر شخصيتك</div>
+      <div id="avatar-grid"></div>
+    </div>
+
+    <button id="login-btn" class="btn btn-primary btn-full btn-lg">دخول</button>
+  </div>
+</div>
+
+<!-- ===== شاشة القائمة الرئيسية ===== -->
+<div id="screen-menu" class="screen hidden">
+  <!-- Header -->
+  <div class="menu-header">
+    <div class="menu-header-left">
+      <div class="player-avatar-display"></div>
+      <div>
+        <div class="player-name-display">—</div>
+        <div class="player-level-display">LV 1</div>
+      </div>
+      <div class="coins-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="var(--gold)"/><text x="12" y="16" font-size="9" text-anchor="middle" fill="#000" font-weight="900">$</text></svg>
+        <span id="coins-display">0</span>
+      </div>
+    </div>
+    <div class="xp-bar-wrap">
+      <div class="xp-bar-bg"><div id="xp-bar" class="xp-bar" style="width:5%"></div></div>
+      <span id="xp-text" class="xp-text">0 XP</span>
+    </div>
+    <div class="menu-header-right">
+      <button class="notif-btn" id="notif-bell" title="الإشعارات">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span id="notif-count" class="notif-badge hidden">0</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="menu-body">
+    <!-- Logo -->
+    <div class="menu-logo-area">
+      <svg class="game-logo-svg" viewBox="0 0 300 90" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gr2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#ff0040"/><stop offset="100%" style="stop-color:#e00030"/>
+          </linearGradient>
+          <linearGradient id="gb2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#00d4ff"/><stop offset="100%" style="stop-color:#0090cc"/>
+          </linearGradient>
+          <filter id="glow-r2"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-b2"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <text x="10" y="52" font-family="Orbitron,monospace" font-weight="900" font-size="42" fill="url(#gr2)" filter="url(#glow-r2)">C</text>
+        <circle cx="76" cy="34" r="22" fill="none" stroke="#ffd700" stroke-width="4" filter="url(#glow-r2)"/>
+        <circle cx="76" cy="34" r="14" fill="none" stroke="#ffd700" stroke-width="2" opacity="0.6"/>
+        <circle cx="76" cy="34" r="4" fill="#ffd700"/>
+        <line x1="76" y1="8" x2="76" y2="16" stroke="#ffd700" stroke-width="2.5"/>
+        <line x1="76" y1="52" x2="76" y2="60" stroke="#ffd700" stroke-width="2.5"/>
+        <line x1="50" y1="34" x2="58" y2="34" stroke="#ffd700" stroke-width="2.5"/>
+        <line x1="94" y1="34" x2="102" y2="34" stroke="#ffd700" stroke-width="2.5"/>
+        <text x="104" y="52" font-family="Orbitron,monospace" font-weight="900" font-size="42" fill="url(#gr2)" filter="url(#glow-r2)">DE</text>
+        <text x="15" y="78" font-family="Orbitron,monospace" font-weight="700" font-size="28" fill="url(#gb2)" filter="url(#glow-b2)" letter-spacing="8">NAMES</text>
+        <text x="225" y="78" font-family="Orbitron,monospace" font-weight="400" font-size="11" fill="#ffd700" letter-spacing="3" opacity="0.85">CLASSIC</text>
+      </svg>
+    </div>
+
+    <!-- 3 بطاقات رئيسية -->
+    <div class="menu-main-cards">
+      <!-- انضم لغرفة - يحتوي على القائمة داخله -->
+      <div class="menu-card join-card" id="btn-show-join-room">
+        <div class="menu-card-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+        </div>
+        <div class="menu-card-title" style="color:var(--blue)">انضم لغرفة</div>
+        <div class="menu-card-desc">ادخل غرفة موجودة بكود أو من القائمة</div>
+      </div>
+      <!-- كيف تلعب -->
+      <div class="menu-card howto-card" id="btn-how-to-play">
+        <div class="menu-card-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="menu-card-title" style="color:var(--gold)">كيف تلعب</div>
+        <div class="menu-card-desc">تعلّم قواعد اللعبة والاستراتيجيات</div>
+      </div>
+      <!-- إنشاء غرفة - يمتد عرض كامل -->
+      <div class="menu-card create-card" id="btn-show-create-room">
+        <div class="menu-card-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </div>
+        <div class="menu-card-title" style="color:var(--red)">إنشاء غرفة جديدة</div>
+      </div>
+    </div>
+
+    <!-- أزرار جانبية -->
+    <div class="menu-sidebar">
+      <button class="sidebar-btn" id="sidebar-friends-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        الأصدقاء
+      </button>
+      <button class="sidebar-btn" id="sidebar-inventory-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        المخزون
+      </button>
+      <button class="sidebar-btn" id="sidebar-missions-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        المهام
+      </button>
+      <button class="sidebar-btn" id="sidebar-market-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        المتجر
+      </button>
+      <button class="sidebar-btn" id="sidebar-levels-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        المستويات
+      </button>
+      <button class="sidebar-btn" id="sidebar-settings-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        الإعدادات
+      </button>
+      <button class="sidebar-btn hidden" id="sidebar-admin-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span style="color:var(--gold)">لوحة القائد</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom: Global Chat shortcut -->
+  <div class="menu-bottom-bar">
+    <div class="global-chat-shortcut" onclick="GlobalChat.open()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      الدردشة العامة
+    </div>
+  </div>
+</div>
+
+<!-- ===== شاشة اللوبي ===== -->
+<div id="screen-lobby" class="screen hidden">
+  <div class="lobby-header">
+    <div>
+      <div id="lobby-room-name" class="lobby-title">الغرفة</div>
+      <div id="lobby-mode-label" class="lobby-mode-label"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:0.72rem;color:var(--text-dim)">الكود:</span>
+      <span id="lobby-room-code" class="lobby-code">—</span>
+    </div>
+  </div>
+  <div class="lobby-body">
+    <div id="lobby-teams-container" class="lobby-duo-grid"></div>
+  </div>
+  <div class="lobby-footer">
+    <button id="lobby-start-btn" class="btn btn-primary">بدء اللعبة</button>
+    <button id="lobby-leave-btn" class="btn btn-ghost">مغادرة</button>
+  </div>
+</div>
+
+<!-- ===== شاشة اللعبة ===== -->
+<div id="screen-game" class="screen hidden">
+  <!-- Header -->
+  <div class="game-header">
+    <div>
+      <span id="game-room-name" class="game-room-name"></span>
+      <span id="game-mode-label" style="font-size:0.7rem;color:var(--text-dim);margin-right:8px"></span>
+    </div>
+    <div id="turn-info" class="turn-info"></div>
+    <div id="my-turn-indicator" class="my-turn-indicator hidden">دورك</div>
+    <button id="game-leave-btn" class="btn btn-ghost btn-sm">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      خروج
+    </button>
+  </div>
+
+  <!-- Game Body: panels + cards -->
+  <div class="game-body">
+    <!-- Panel أيسر (فريق أزرق) -->
+    <div class="game-side-panel" id="game-left-panel"></div>
+
+    <!-- Center: hint bar + cards -->
+    <div class="game-center">
+      <!-- Hint announcement (يظهر 3 ثوانٍ) -->
+      <div class="hint-announcement hidden" id="hint-announcement">
+        <div class="hint-announcement-card">
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:4px">التلميح</div>
+          <div class="hint-announcement-word" id="hint-word-display"></div>
+          <div class="hint-announcement-count">عدد البطاقات: <span id="hint-count-display"></span></div>
+        </div>
+      </div>
+
+      <!-- Inline hint bar (يبقى فوق الشبكة) -->
+      <div class="inline-hint-bar hidden" id="inline-hint-bar">
+        <span style="font-size:0.75rem;color:var(--text-dim)">التلميح:</span>
+        <span class="hint-word-display" id="inline-hint-word" style="font-weight:700;color:var(--gold)"></span>
+        <span style="color:var(--text-dim);font-size:0.75rem">×</span>
+        <span class="hint-count-display" id="inline-hint-count" style="color:var(--blue);font-weight:700"></span>
+      </div>
+
+      <!-- Cards -->
+      <div class="cards-area">
+        <div id="cards-grid"></div>
+      </div>
+
+      <!-- Game Log -->
+      <div class="game-log-section" id="game-log"></div>
+    </div>
+
+    <!-- Panel أيمن (فريق أحمر) -->
+    <div class="game-side-panel" id="game-right-panel"></div>
+  </div>
+
+  <!-- Footer: hint input + turn actions -->
+  <div class="game-footer">
+    <!-- بار إدخال التلميح (للبوص فقط) -->
+    <div class="hint-input-bar hidden" id="hint-input-bar">
+      <input id="hint-word-input" type="text" placeholder="كلمة التلميح..." style="flex:1" />
+      <div class="hint-count-wrap">
+        <button class="hint-count-btn" onclick="document.getElementById('hint-count-input').stepDown()">-</button>
+        <input id="hint-count-input" type="number" value="1" min="1" max="9" style="width:40px;text-align:center;padding:6px 4px" />
+        <button class="hint-count-btn" onclick="document.getElementById('hint-count-input').stepUp()">+</button>
+      </div>
+      <button id="send-hint-btn" class="btn btn-primary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        أرسل
+      </button>
+    </div>
+    <!-- أزرار الدور -->
+    <div class="turn-actions-bar">
+      <button id="end-turn-btn" class="btn btn-ghost btn-sm hidden">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        إنهاء الدور
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== نهاية اللعبة ===== -->
+<div class="game-over-overlay hidden" id="overlay-game-over">
+  <canvas id="win-fireworks" style="position:absolute;inset:0;pointer-events:none;width:100%;height:100%"></canvas>
+  <div class="game-over-card">
+    <div id="gameover-title" class="gameover-title" style="color:var(--gold)">فزتم!</div>
+    <div id="gameover-msg" class="gameover-msg"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button id="play-again-btn" class="btn btn-primary">اللعبة مجدداً</button>
+      <button id="back-to-menu-btn" class="btn btn-ghost">القائمة الرئيسية</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== تراكب الأسطوري ===== -->
+<div id="overlay-legendary" class="hidden">
+  <div class="legendary-card">
+    <div id="legendary-particles"></div>
+    <div class="legendary-title">دخل الأسطوري</div>
+    <div id="legendary-avatar-display" style="margin:10px auto;width:60px;height:60px"></div>
+    <div id="legendary-player-name" class="legendary-name"></div>
+  </div>
+</div>
+
+<!-- ===== إعادة الاتصال ===== -->
+<div id="overlay-reconnecting" class="hidden">
+  <div class="reconnecting-spinner"></div>
+  <p>جارٍ إعادة الاتصال...</p>
+  <p id="reconnect-countdown" style="color:var(--text-dim);font-size:0.8rem;margin-top:8px"></p>
+</div>
+
+<!-- ===================== PANELS ===================== -->
+
+<!-- إشعارات -->
+<div class="side-panel hidden" id="panel-notifications">
+  <div class="panel-card">
+    <div class="panel-header">
+      <span class="panel-title">الإشعارات</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="mark-all-read-btn" class="btn btn-ghost btn-sm">قراءة الكل</button>
+        <button class="panel-close" data-panel="panel-notifications">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="panel-body"><div id="notifications-list"></div></div>
+  </div>
+</div>
+
+<!-- أصدقاء -->
+<div class="side-panel hidden" id="panel-friends">
+  <div class="panel-card">
+    <div class="panel-header">
+      <span class="panel-title">الأصدقاء</span>
+      <button class="panel-close" data-panel="panel-friends">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="friends-list-tab">قائمتي</button>
+      <button class="panel-tab" data-tab="friends-requests-tab">الطلبات</button>
+      <button class="panel-tab" data-tab="friends-search-tab">بحث</button>
+    </div>
+    <div class="panel-body">
+      <div id="friends-list-tab" class="panel-tab-content active">
+        <div id="friends-list"><div style="color:var(--text-dim);text-align:center;padding:30px">جارٍ التحميل...</div></div>
+      </div>
+      <div id="friends-requests-tab" class="panel-tab-content hidden">
+        <div id="friends-requests"></div>
+      </div>
+      <div id="friends-search-tab" class="panel-tab-content hidden">
+        <div class="form-group" style="margin-bottom:12px">
+          <input id="friend-search-input" type="text" placeholder="ابحث باسم المستخدم..." />
+          <button id="friend-search-btn" class="btn btn-primary btn-sm" style="margin-top:6px">بحث</button>
+        </div>
+        <div id="friends-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- مخزون -->
+<div class="side-panel hidden" id="panel-inventory">
+  <div class="panel-card">
+    <div class="panel-header">
+      <span class="panel-title">مخزوني</span>
+      <button class="panel-close" data-panel="panel-inventory">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="inv-skins-tab">حزم البطاقات</button>
+      <button class="panel-tab" data-tab="inv-frames-tab">الإطارات</button>
+      <button class="panel-tab" data-tab="inv-titles-tab">الألقاب</button>
+    </div>
+    <div class="panel-body">
+      <div id="inv-skins-tab" class="panel-tab-content active"><div id="inv-skins"></div></div>
+      <div id="inv-frames-tab" class="panel-tab-content hidden"><div id="inv-frames"></div></div>
+      <div id="inv-titles-tab" class="panel-tab-content hidden"><div id="inv-titles"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- مهام -->
+<div class="side-panel hidden" id="panel-missions">
+  <div class="panel-card">
+    <div class="panel-header">
+      <span class="panel-title">المهام والتحديات</span>
+      <button class="panel-close" data-panel="panel-missions">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="missions-daily-tab">يومية</button>
+      <button class="panel-tab" data-tab="missions-weekly-tab">أسبوعية</button>
+      <button class="panel-tab" data-tab="missions-challenges-tab">تحديات</button>
+    </div>
+    <div class="panel-body">
+      <div id="missions-daily-tab" class="panel-tab-content active">
+        <div id="missions-daily-list"></div>
+        <div id="daily-timer" style="text-align:center;font-size:0.72rem;color:var(--text-dim);margin-top:8px"></div>
+      </div>
+      <div id="missions-weekly-tab" class="panel-tab-content hidden">
+        <div id="missions-weekly-list"></div>
+      </div>
+      <div id="missions-challenges-tab" class="panel-tab-content hidden">
+        <div id="missions-challenges-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- متجر -->
+<div class="side-panel hidden" id="panel-market">
+  <div class="panel-card">
+    <div class="panel-header">
+      <span class="panel-title">المتجر</span>
+      <button class="panel-close" data-panel="panel-market">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="market-skins-tab">حزم البطاقات</button>
+      <button class="panel-tab" data-tab="market-frames-tab">الإطارات</button>
+    </div>
+    <div class="panel-body">
+      <div id="market-locked" class="hidden" style="text-align:center;padding:40px;color:var(--text-dim)"></div>
+      <div id="market-content">
+        <div id="market-skins-tab" class="panel-tab-content active"><div id="market-skins"></div></div>
+        <div id="market-frames-tab" class="panel-tab-content hidden"><div id="market-frames"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- إعدادات -->
+<div class="side-panel hidden" id="panel-settings">
+  <div class="panel-card">
+    <div class="panel-header">
+      <span class="panel-title">الإعدادات</span>
+      <button class="panel-close" data-panel="panel-settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <!-- البروفايل -->
+      <div class="admin-section">
+        <h4>البروفايل</h4>
+        <div class="form-group" style="margin-bottom:10px">
+          <label>اسم المستخدم</label>
+          <input id="profile-nickname-input" type="text" maxlength="20" />
+        </div>
+        <div class="settings-avatar-section">
+          <label style="margin-bottom:6px">الشخصية</label>
+          <div id="settings-avatar-grid"></div>
+        </div>
+        <div style="margin-top:8px">
+          <label style="margin-bottom:6px">صورة مخصصة (تظهر لك فقط)</label>
+          <input id="custom-avatar-upload" type="file" accept="image/*" style="width:100%;font-size:0.78rem" />
+        </div>
+        <button id="save-profile-btn" class="btn btn-primary btn-full" style="margin-top:12px">حفظ التعديلات</button>
+      </div>
+      <!-- الصوت -->
+      <div class="admin-section">
+        <h4>الصوت</h4>
+        <div class="toggle-row">
+          <span style="font-size:0.82rem">تشغيل الأصوات</span>
+          <label class="toggle"><input type="checkbox" id="set-sound-effects" checked /><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px">
+            <span style="font-size:0.82rem">مستوى الصوت</span>
+            <span id="volume-display" style="font-size:0.75rem;color:var(--text-dim)">80%</span>
+          </div>
+        </div>
+        <input type="range" id="set-volume" min="0" max="100" value="80" style="width:100%;margin-top:4px" />
+      </div>
+      <!-- الإشعارات (بدون push notifications) -->
+      <div class="admin-section">
+        <h4>إشعارات اللعبة</h4>
+        <div class="toggle-row">
+          <span style="font-size:0.82rem">الاهتزاز</span>
+          <label class="toggle"><input type="checkbox" id="set-vibration" checked /><span class="toggle-slider"></span></label>
+        </div>
+        <!-- إشعار الأسطوري - مخفي حتى المستوى 98 -->
+        <div class="toggle-row hidden" id="legendary-notif-row">
+          <span style="font-size:0.82rem">إشعار دخول الأسطوري</span>
+          <label class="toggle"><input type="checkbox" id="set-legendary-notif" checked /><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <!-- الحساب -->
+      <div class="admin-section">
+        <h4>الحساب</h4>
+        <div class="settings-player-id-row">
+          <span class="settings-id-label">معرّفك</span>
+          <span id="settings-player-id" class="settings-id-value">—</span>
+        </div>
+        <button id="logout-btn" class="btn btn-danger btn-full" style="margin-top:10px">تسجيل الخروج</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- مستويات -->
+<div class="side-panel hidden" id="panel-levels">
+  <div class="panel-card">
+    <div class="panel-header">
+      <span class="panel-title">المستويات والمكافآت</span>
+      <button class="panel-close" data-panel="panel-levels">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <div id="levels-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- دردشة عامة -->
+<div class="side-panel hidden" id="panel-global-chat">
+  <div class="panel-card">
+    <div class="panel-header">
+      <span class="panel-title">الدردشة العامة</span>
+      <button class="panel-close" data-panel="panel-global-chat">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="panel-body" style="display:flex;flex-direction:column;height:calc(100dvh - 70px)">
+      <div id="global-chat-list" class="global-chat-list" style="flex:1"></div>
+      <div class="global-chat-input-row">
+        <input id="global-chat-input" type="text" placeholder="اكتب رسالة..." maxlength="200" />
+        <button id="global-chat-send-btn" class="btn btn-primary btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- لوحة القائد (أدمن) -->
+<div class="side-panel hidden" id="panel-admin">
+  <div class="panel-card" style="width:380px;max-width:95vw">
+    <div class="panel-header">
+      <span class="panel-title" style="color:var(--gold)">لوحة القائد</span>
+      <button class="panel-close" data-panel="panel-admin">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="dev-stats">إحصائيات</button>
+      <button class="panel-tab" data-tab="dev-players-tab">اللاعبون</button>
+      <button class="panel-tab" data-tab="dev-challenges-tab">تحديات</button>
+      <button class="panel-tab" data-tab="dev-skins-tab">حزم</button>
+      <button class="panel-tab" data-tab="dev-broadcast-tab">إذاعة</button>
+      <button class="panel-tab" data-tab="dev-more-tab">أخرى</button>
+    </div>
+    <div class="panel-body">
+      <!-- إحصائيات -->
+      <div id="dev-stats" class="panel-tab-content active">
+        <div id="dev-stats-grid"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button id="dev-show-online-btn" class="btn btn-primary btn-sm">المتصلون الآن</button>
+          <button id="dev-show-rooms-btn" class="btn btn-blue btn-sm">الغرف النشطة</button>
+          <button id="dev-show-clans-btn" class="btn btn-ghost btn-sm">الكلانات</button>
+        </div>
+        <div id="dev-online-players"></div>
+        <div id="dev-rooms-list" style="margin-top:12px"></div>
+        <div id="dev-clans-list" style="margin-top:12px"></div>
+        <div class="admin-section" style="margin-top:16px">
+          <h4>توقيف السيرفر</h4>
+          <button id="dev-pause-btn" class="btn btn-danger btn-sm">توقيف مؤقت مع رسالة</button>
+        </div>
+        <div class="admin-section">
+          <h4>ظهور لقب Dev</h4>
+          <div class="toggle-row">
+            <span style="font-size:0.82rem">إظهار [Dev] لدى اللاعبين</span>
+            <label class="toggle"><input type="checkbox" id="dev-visibility-toggle" checked /><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- اللاعبون -->
+      <div id="dev-players-tab" class="panel-tab-content hidden">
+        <div class="form-group" style="margin-bottom:12px">
+          <input id="dev-player-search" type="text" placeholder="ابحث باسم أو ID..." />
+          <button id="dev-search-btn" class="btn btn-primary btn-sm" style="margin-top:6px;width:100%">بحث</button>
+        </div>
+        <div id="dev-players-result"></div>
+      </div>
+
+      <!-- تحديات -->
+      <div id="dev-challenges-tab" class="panel-tab-content hidden">
+        <button class="btn btn-primary btn-sm btn-full" style="margin-bottom:12px" onclick="UI.showModal('modal-new-challenge')">إضافة تحدي جديد</button>
+        <div id="dev-challenges-list"></div>
+      </div>
+
+      <!-- حزم -->
+      <div id="dev-skins-tab" class="panel-tab-content hidden">
+        <button class="btn btn-primary btn-sm btn-full" style="margin-bottom:12px" onclick="UI.showModal('modal-new-skin')">إضافة حزمة للمتجر</button>
+      </div>
+
+      <!-- إذاعة -->
+      <div id="dev-broadcast-tab" class="panel-tab-content hidden">
+        <div class="admin-section">
+          <h4>إرسال رسالة لجميع اللاعبين</h4>
+          <div class="form-group" style="margin-bottom:8px">
+            <textarea id="dev-broadcast-msg" placeholder="اكتب الرسالة هنا..." rows="4"></textarea>
+          </div>
+          <button id="dev-broadcast-btn" class="btn btn-warning btn-sm btn-full">إرسال للجميع</button>
+        </div>
+      </div>
+
+      <!-- أخرى -->
+      <div id="dev-more-tab" class="panel-tab-content hidden">
+        <div class="admin-section">
+          <h4>كيف تلعب (تحرير)</h4>
+          <p style="font-size:0.75rem;color:var(--text-dim)">قريباً</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODALS ===================== -->
+
+<!-- إنشاء غرفة -->
+<div class="modal hidden" id="modal-create-room">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">إنشاء غرفة جديدة</span>
+      <button class="modal-close" data-modal="modal-create-room">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>اسم الغرفة</label>
+        <input id="room-name-input" type="text" placeholder="أدخل اسم الغرفة..." maxlength="30" />
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور (اختياري)</label>
+        <input id="room-pass-input" type="password" placeholder="اتركها فارغة للغرفة العامة" />
+      </div>
+      <div class="form-group">
+        <label>نوع اللعبة</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="room-mode" id="room-mode-duo" value="duo" checked />
+            زوجي (فريقان)
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="room-mode" id="room-mode-solo" value="solo" />
+            سولو (تحدي)
+          </label>
+        </div>
+      </div>
+      <div class="form-group hidden" id="solo-grid-options">
+        <label>حجم الشبكة</label>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="solo-grid" value="15" /> 15 بطاقة</label>
+          <label class="radio-option"><input type="radio" name="solo-grid" value="20" /> 20 بطاقة</label>
+          <label class="radio-option"><input type="radio" name="solo-grid" value="25" checked /> 25 بطاقة</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="create-room-btn" class="btn btn-primary">إنشاء الغرفة</button>
+      <button class="modal-close btn btn-ghost" data-modal="modal-create-room">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- الانضمام لغرفة -->
+<div class="modal hidden" id="modal-join-room">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">الانضمام لغرفة</span>
+      <button class="modal-close" data-modal="modal-join-room">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:12px">
+        <label>الانضمام بكود مباشر</label>
+        <div style="display:flex;gap:8px">
+          <input id="join-code-input" type="text" placeholder="أدخل الكود..." maxlength="8" style="flex:1;text-transform:uppercase" />
+          <button id="join-by-code-btn" class="btn btn-primary btn-sm">انضم</button>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:0.85rem;font-weight:700">الغرف المتاحة</span>
+          <button id="refresh-rooms-btn" class="btn btn-ghost btn-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            تحديث
+          </button>
+        </div>
+        <div id="public-rooms-list" style="max-height:300px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- إنشاء كلان -->
+<div class="modal hidden" id="modal-create-clan">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">إنشاء كلان</span>
+      <button class="modal-close" data-modal="modal-create-clan">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;padding:8px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:8px;margin-bottom:12px">
+        <span style="color:var(--gold);font-size:0.85rem">التكلفة: <span id="clan-cost-display">3,000</span> عملة</span>
+      </div>
+      <div class="form-group">
+        <label>اسم الكلان</label>
+        <input id="clan-name-input" type="text" placeholder="اسم مميز..." maxlength="20" />
+      </div>
+      <div class="form-group">
+        <label>وصف (اختياري)</label>
+        <textarea id="clan-desc-input" placeholder="وصف قصير عن كلانك..." rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="confirm-create-clan-btn" class="btn btn-primary">إنشاء بـ 3,000 عملة</button>
+      <button class="modal-close btn btn-ghost" data-modal="modal-create-clan">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- كيف تلعب -->
+<div class="modal hidden" id="modal-how-to-play">
+  <div class="modal-card" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title">كيف تلعب؟</span>
+      <button class="modal-close" data-modal="modal-how-to-play">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="howto-section">
+        <h4>الهدف</h4>
+        <p>كل فريق لديه بطاقات مخفية على الشبكة. البوص يعرف الأماكن ويرسل تلميحاً، والعملاء يحاولون إيجاد بطاقاتهم.</p>
+      </div>
+      <div class="howto-section">
+        <h4>وضع زوجي (25 بطاقة)</h4>
+        <ul>
+          <li>فريقان: أحمر وأزرق - كل فريق بوص + لاعبين</li>
+          <li>البوص يرسل تلميحاً + عدد بطاقاته</li>
+          <li>العملاء يختارون البطاقات حسب التلميح</li>
+          <li>اختيار بطاقة سوداء = خسارة فورية</li>
+          <li>أول فريق ينهي بطاقاته يفوز</li>
+        </ul>
+      </div>
+      <div class="howto-section">
+        <h4>وضع سولو (15/20/25 بطاقة)</h4>
+        <ul>
+          <li>بوص واحد + مجموعة لاعبين</li>
+          <li>البوص يختار 3 بطاقات كحد أقصى كتلميح</li>
+          <li>البطاقة السوداء = إقصاء من يختارها</li>
+          <li>أعلى نقاط عند انتهاء البطاقات يفوز</li>
+        </ul>
+      </div>
+      <div class="howto-section">
+        <h4>ألوان البطاقات</h4>
+        <ul>
+          <li>البيج: محايدة (للعملاء قبل الكشف)</li>
+          <li>الأحمر/الأزرق: بطاقات الفريق</li>
+          <li>الأسود: خطر!</li>
+        </ul>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-close btn btn-primary" data-modal="modal-how-to-play">فهمت!</button>
+    </div>
+  </div>
+</div>
+
+<!-- منح مكافأة (أدمن) -->
+<div class="modal hidden" id="modal-grant-player">
+  <div class="modal-card" style="max-width:360px">
+    <div class="modal-header">
+      <span class="modal-title">منح مكافأة</span>
+      <button class="modal-close" data-modal="modal-grant-player">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="grant-player-id" />
+      <p id="grant-player-info" style="font-size:0.82rem;color:var(--text-dim);margin-bottom:12px"></p>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>عملات</label>
+          <input id="grant-coins" type="number" value="0" min="0" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>XP</label>
+          <input id="grant-xp" type="number" value="0" min="0" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="dev-grant-confirm-btn" class="btn btn-primary">منح</button>
+      <button class="modal-close btn btn-ghost" data-modal="modal-grant-player">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- إضافة تحدي -->
+<div class="modal hidden" id="modal-new-challenge">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">إضافة تحدي جديد</span>
+      <button class="modal-close" data-modal="modal-new-challenge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>اسم التحدي</label>
+        <input id="ch-name" type="text" placeholder="مثال: الجاسوس المحترف" />
+      </div>
+      <div class="form-group">
+        <label>الوصف</label>
+        <input id="ch-desc" type="text" placeholder="مثال: اربح 10 جولات زوجية" />
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label>الشرط</label>
+          <select id="ch-condition">
+            <option value="win_games">اربح X جولة</option>
+            <option value="play_games">العب X جولة</option>
+            <option value="duo_games">العب X زوجي</option>
+            <option value="send_hints">أرسل X تلميح</option>
+            <option value="correct_hints">تلميحات صحيحة</option>
+            <option value="collect_coins">اجمع X عملة</option>
+            <option value="no_black_win">اربح بدون سوداء</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>القيمة</label>
+          <input id="ch-condition-value" type="number" value="5" min="1" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>نوع المكافأة</label>
+          <select id="ch-reward-type">
+            <option value="xp">XP</option>
+            <option value="coins">عملات</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>قيمة المكافأة</label>
+          <input id="ch-reward-value" type="number" value="500" min="1" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>البداية</label>
+          <input id="ch-start" type="date" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>النهاية</label>
+          <input id="ch-end" type="date" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="dev-save-challenge-btn" class="btn btn-primary">إضافة للتحديات</button>
+      <button class="modal-close btn btn-ghost" data-modal="modal-new-challenge">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- إضافة حزمة بطاقات -->
+<div class="modal hidden" id="modal-new-skin">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">إضافة حزمة بطاقات للمتجر</span>
+      <button class="modal-close" data-modal="modal-new-skin">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>معرّف فريد (بالإنجليزية)</label>
+        <input id="skin-id" type="text" placeholder="مثال: ocean_skin" />
+      </div>
+      <div class="form-group">
+        <label>اسم الحزمة</label>
+        <input id="skin-name" type="text" placeholder="مثال: حزمة المحيط" />
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>السعر (عملات)</label>
+          <input id="skin-price" type="number" value="2500" min="0" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>الندرة</label>
+          <select id="skin-rarity">
+            <option value="rare">نادر</option>
+            <option value="epic">فائق</option>
+            <option value="legendary">أسطوري</option>
+            <option value="divine">إلهي</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>CSS التصميم (اختياري)</label>
+        <input id="skin-css" type="text" placeholder="مثال: background:linear-gradient(...)" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="dev-save-skin-btn" class="btn btn-primary">إضافة للمتجر فوراً</button>
+      <button class="modal-close btn btn-ghost" data-modal="modal-new-skin">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/socket-client.js"></script>
+<script src="js/reconnection.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/friends.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/market.js"></script>
+<script src="js/global-chat.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/game.js"></script>
+
+<!-- Missions inline (simple) -->
+<script>
+const Missions = (() => {
+  const API = "https://uuuuu-rup4.onrender.com/api";
+
+  async function loadMissions() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/missions`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      renderMissions("missions-daily-list", data.daily || []);
+      renderMissions("missions-weekly-list", data.weekly || []);
+      renderMissions("missions-challenges-list", data.challenges || [], true);
+      updateDailyTimer(data.nextReset);
+    } catch {}
+  }
+
+  function renderMissions(containerId, missions, isChallenges = false) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (!missions.length) {
+      el.innerHTML = `<div style="color:var(--text-dim);text-align:center;padding:30px">${isChallenges ? "لا توجد تحديات حالياً" : "لا توجد مهام"}</div>`;
+      return;
+    }
+    el.innerHTML = missions.map((m) => {
+      const pct = Math.min(100, ((m.progress || 0) / (m.target || 1)) * 100);
+      const done = m.completed || m.progress >= m.target;
+      return `
+        <div class="mission-item ${done ? "mission-completed" : ""}">
+          <div class="mission-header">
+            <span class="mission-name">${m.name}</span>
+            <span class="mission-reward">
+              ${m.rewardXP ? `<span>${m.rewardXP} XP</span>` : ""}
+              ${m.rewardCoins ? `<span style="color:var(--gold)">${m.rewardCoins} عملة</span>` : ""}
+            </span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:4px">${m.description || ""}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.68rem;color:var(--text-dim)">
+            <span>${m.progress || 0} / ${m.target || 1}</span>
+            ${done ? `<span style="color:var(--green);font-weight:700">مكتملة</span>` : ""}
+          </div>
+          <div class="mission-progress-bar">
+            <div class="mission-progress-fill" style="width:${pct}%"></div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function updateDailyTimer(nextReset) {
+    const el = document.getElementById("daily-timer");
+    if (!el || !nextReset) return;
+    const updateText = () => {
+      const diff = new Date(nextReset).getTime() - Date.now();
+      if (diff <= 0) { el.textContent = "تجديد المهام قريباً..."; return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      el.textContent = `تُجدَّد بعد ${h}س ${m}د`;
+    };
+    updateText();
+    setInterval(updateText, 60000);
+  }
+
+  return { loadMissions };
+})();
+</script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
