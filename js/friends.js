@@ -199,5 +199,44 @@ const Friends = (() => {
     } catch {}
   }
 
-  return { load, searchPlayer, sendRequest, respondRequest, removeFriend, pin, viewProfile, block };
+  async function loadBlockList() {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API}/players/me/blocked`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      const list = document.getElementById("blocked-list");
+      if (!list) return;
+      const blocked = data.blocked || [];
+      if (!blocked.length) {
+        list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-dim)">لا يوجد لاعبون محظورون</div>';
+        return;
+      }
+      list.innerHTML = blocked.map((p) => `
+        <div class="blocked-item">
+          <div>${Effects.buildAvatarImg(p.avatar, 34)}</div>
+          <div class="blocked-info">
+            <div class="blocked-name">${p.nickname}</div>
+            <div class="blocked-id">ID: ${p.playerId}</div>
+          </div>
+          <button class="btn btn-sm btn-ghost" onclick="Friends.unblock('${p.playerId}')">رفع الحظر</button>
+        </div>
+      `).join("");
+    } catch { }
+  }
+
+  async function unblock(targetId) {
+    const token = localStorage.getItem("token");
+    try {
+      await fetch(`${API}/players/${targetId}/block`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      UI.toast("تم رفع الحظر", "success");
+      loadBlockList();
+    } catch { UI.toast("فشل رفع الحظر", "error"); }
+  }
+
+  return { load, searchPlayer, sendRequest, respondRequest, removeFriend, pin, viewProfile, block, loadBlockList, unblock };
 })();
