@@ -11,64 +11,178 @@
   <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
   <link rel="apple-touch-icon" href="assets/images/favicon.svg" />
   <link rel="stylesheet" href="css/style.css" />
+
   <style>
-    /* ===== تحسينات إضافية للـ index ===== */
-    .register-step {
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      animation: fadeStep 0.3s ease;
+    /* ============================================================
+       تحسينات إضافية - بدون إيموجي، خلفيات حية، أنيميشن
+       ============================================================ */
+
+    /* ----- خلفية حية للمربع ----- */
+    .register-card {
+      position: relative;
+      overflow: hidden;
+      background: rgba(10, 10, 30, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 0, 64, 0.25);
+      box-shadow: 0 0 60px rgba(255, 0, 64, 0.12), inset 0 0 80px rgba(255, 0, 64, 0.02);
+      animation: cardGlowPulse 4s ease-in-out infinite alternate;
     }
-    .register-step.active {
-      display: flex;
+    @keyframes cardGlowPulse {
+      0% { border-color: rgba(255, 0, 64, 0.25); box-shadow: 0 0 60px rgba(255, 0, 64, 0.12), inset 0 0 80px rgba(255, 0, 64, 0.02); }
+      50% { border-color: rgba(0, 212, 255, 0.3); box-shadow: 0 0 70px rgba(0, 212, 255, 0.15), inset 0 0 80px rgba(0, 212, 255, 0.03); }
+      100% { border-color: rgba(184, 41, 221, 0.35); box-shadow: 0 0 65px rgba(184, 41, 221, 0.12), inset 0 0 80px rgba(184, 41, 221, 0.02); }
     }
-    @keyframes fadeStep {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+
+    /* ----- خطوط نيون متحركة في الخلفية ----- */
+    .register-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: 
+        repeating-linear-gradient(0deg, 
+          transparent, 
+          transparent 40px, 
+          rgba(0, 212, 255, 0.02) 40px, 
+          rgba(0, 212, 255, 0.02) 41px
+        ),
+        repeating-linear-gradient(90deg, 
+          transparent, 
+          transparent 40px, 
+          rgba(255, 0, 64, 0.015) 40px, 
+          rgba(255, 0, 64, 0.015) 41px
+        );
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
     }
-    .step-indicators {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 6px;
+    @keyframes gridMove {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(40px, 40px) rotate(1deg); }
     }
+    .register-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ----- الشعار (Logo) ----- */
+    .register-logo-img {
+      max-width: 260px;
+      max-height: 100px;
+      width: 85%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 30px rgba(255, 0, 64, 0.9)) drop-shadow(0 0 60px rgba(0, 212, 255, 0.5)) drop-shadow(0 0 100px rgba(255, 0, 64, 0.2));
+      animation: logoFloat 3s ease-in-out infinite alternate;
+    }
+    @keyframes logoFloat {
+      0% { transform: translateY(0px) scale(1); filter: drop-shadow(0 0 30px rgba(255, 0, 64, 0.9)) drop-shadow(0 0 60px rgba(0, 212, 255, 0.5)); }
+      100% { transform: translateY(-6px) scale(1.02); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 1)) drop-shadow(0 0 80px rgba(255, 0, 64, 0.6)) drop-shadow(0 0 120px rgba(0, 212, 255, 0.3)); }
+    }
+
+    /* ----- عنوان التسجيل المحسن ----- */
+    .register-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 2px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, #ffd700, #ff6b00, #ffd700);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmerTitle 4s ease-in-out infinite;
+    }
+    @keyframes shimmerTitle {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    /* ----- نقاط الخطوات ----- */
     .step-dot {
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.15);
-      transition: all 0.3s;
+      background: rgba(255,255,255,0.12);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       cursor: pointer;
+      border: 2px solid transparent;
+      position: relative;
     }
     .step-dot.active {
       background: var(--blue);
-      box-shadow: 0 0 12px rgba(0,212,255,0.5);
+      box-shadow: 0 0 20px rgba(0,212,255,0.6), 0 0 40px rgba(0,212,255,0.2);
+      transform: scale(1.15);
+      border-color: rgba(0,212,255,0.3);
     }
     .step-dot.done {
       background: var(--green);
+      box-shadow: 0 0 16px rgba(0,255,136,0.4);
+      transform: scale(1.05);
     }
     .step-dot.error {
       background: var(--red);
+      box-shadow: 0 0 16px rgba(255,0,64,0.4);
+      animation: dotError 0.5s ease;
     }
-    .step-nav {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
+    @keyframes dotError {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.3); }
     }
-    .step-nav .btn {
-      flex: 1;
-      font-size: 0.82rem;
-      padding: 8px 12px;
+    .step-dot::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1px solid transparent;
+      transition: all 0.4s;
     }
-    .step-nav .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    .step-dot.active::after {
+      border-color: rgba(0,212,255,0.2);
+      animation: dotRipple 1.5s ease-out infinite;
     }
+    @keyframes dotRipple {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    /* ----- تحسين الحقول ----- */
+    .form-group input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font-ar);
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+    .form-group input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.12), 0 0 30px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .form-group input.error {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(255, 0, 64, 0.1);
+    }
+    .form-group input.success {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.08);
+    }
+
     .validation-msg {
       font-size: 0.7rem;
       min-height: 1.2rem;
       display: block;
-      margin-top: 2px;
+      margin-top: 3px;
+      transition: all 0.3s ease;
     }
     .validation-msg.success {
       color: var(--green);
@@ -78,47 +192,240 @@
     }
     .validation-msg.loading {
       color: var(--blue);
+      animation: pulseText 1s ease-in-out infinite;
+    }
+    @keyframes pulseText {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
     }
 
+    /* ----- أزرار التنقل ----- */
+    .step-nav .btn {
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .step-nav .btn:active {
+      transform: scale(0.95);
+    }
+    .step-nav .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    .step-nav .btn-primary {
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      box-shadow: 0 4px 20px rgba(255, 0, 64, 0.25);
+    }
+    .step-nav .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 4px 30px rgba(255, 0, 64, 0.4);
+      transform: translateY(-2px);
+    }
+    .step-nav .btn-ghost {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .step-nav .btn-ghost:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* ----- أفاتارات ----- */
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+    .avatar-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 8px 4px;
+      border: 2px solid transparent;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.03);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      font-size: 0.6rem;
+      color: var(--text-dim);
+    }
+    .avatar-option:hover {
+      border-color: rgba(0, 212, 255, 0.3);
+      background: rgba(0, 212, 255, 0.06);
+      transform: translateY(-3px);
+    }
+    .avatar-option.selected {
+      border-color: var(--gold);
+      background: rgba(255, 215, 0, 0.1);
+      box-shadow: 0 0 24px rgba(255, 215, 0, 0.15);
+      color: var(--gold);
+      transform: translateY(-4px) scale(1.02);
+    }
+    .avatar-option .avatar-svg {
+      width: 42px;
+      height: 42px;
+    }
+    .avatar-option .avatar-svg img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .avatar-option span {
+      font-size: 0.55rem;
+    }
+
+    /* ----- زر إنشاء الحساب النهائي ----- */
+    #btn-register {
+      background: linear-gradient(135deg, #ff0040, #cc0030, #ff0040);
+      background-size: 200% auto;
+      animation: btnGradient 3s ease-in-out infinite alternate;
+      border: none;
+      box-shadow: 0 4px 30px rgba(255, 0, 64, 0.4);
+      font-size: 1rem;
+      padding: 12px;
+      transition: all 0.3s ease;
+    }
+    #btn-register:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 40px rgba(255, 0, 64, 0.6);
+    }
+    #btn-register:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    @keyframes btnGradient {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    /* ----- تجاوب الموبايل ----- */
     @media (max-width: 768px) {
       .register-card {
-        padding: 12px 14px;
-        max-height: 85vh;
+        padding: 14px 16px;
+        max-height: 88vh;
+        border-radius: var(--radius);
       }
       .register-title {
         font-size: 0.95rem;
       }
+      .register-logo-img {
+        max-width: 180px;
+        max-height: 70px;
+      }
       .avatar-grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: 4px;
+        gap: 6px;
       }
       .avatar-option {
-        padding: 4px 2px;
+        padding: 6px 3px;
       }
       .avatar-option .avatar-svg {
-        width: 32px;
-        height: 32px;
+        width: 34px;
+        height: 34px;
+      }
+      .step-dot {
+        width: 10px;
+        height: 10px;
       }
       .step-nav .btn {
-        font-size: 0.7rem;
-        padding: 6px;
+        font-size: 0.75rem;
+        padding: 6px 12px;
+      }
+      .form-group input {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+      }
+      #btn-register {
+        font-size: 0.9rem;
+        padding: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .register-card {
+        padding: 10px 12px;
+        max-height: 82vh;
+      }
+      .register-title {
+        font-size: 0.85rem;
+      }
+      .register-logo-img {
+        max-width: 140px;
+        max-height: 55px;
+      }
+      .avatar-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+      }
+      .avatar-option .avatar-svg {
+        width: 28px;
+        height: 28px;
+      }
+      .avatar-option span {
+        font-size: 0.5rem;
       }
       .step-dot {
         width: 8px;
         height: 8px;
       }
-    }
-    @media (max-width: 480px) {
-      .register-card {
-        padding: 8px 10px;
-        max-height: 80vh;
+      .step-nav .btn {
+        font-size: 0.7rem;
+        padding: 4px 10px;
       }
-      .avatar-grid {
-        grid-template-columns: repeat(3, 1fr);
+      .form-group input {
+        padding: 6px 10px;
+        font-size: 0.8rem;
       }
-      .register-title {
+      #btn-register {
         font-size: 0.85rem;
+        padding: 8px;
       }
+      .auth-tab {
+        font-size: 0.7rem;
+        padding: 6px;
+      }
+      .auth-tabs {
+        max-width: 280px;
+      }
+    }
+
+    /* ----- تحسينات إضافية للهيدر والقائمة ----- */
+    .menu-header {
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 0, 64, 0.2);
+    }
+
+    .menu-logo-img {
+      filter: drop-shadow(0 0 16px rgba(255, 0, 64, 0.6));
+      transition: filter 0.3s ease;
+    }
+    .menu-logo-img:hover {
+      filter: drop-shadow(0 0 28px rgba(255, 215, 0, 0.8));
+    }
+
+    /* ----- شاشة اللعبة واللوبي ----- */
+    #screen-game, #screen-lobby {
+      background: var(--bg);
+    }
+
+    /* ----- تحسينات عامة للخلفيات ----- */
+    .register-container {
+      background: radial-gradient(ellipse at 30% 40%, rgba(255, 0, 64, 0.1), transparent 60%),
+                  radial-gradient(ellipse at 70% 60%, rgba(0, 212, 255, 0.08), transparent 50%),
+                  radial-gradient(ellipse at 50% 100%, rgba(184, 41, 221, 0.06), transparent 40%),
+                  #0a0a1e;
+    }
+
+    /* ----- أيقونات SVG للأزرار ----- */
+    .icon-btn svg, .sidebar-btn svg, .nav-btn svg {
+      transition: all 0.3s ease;
+    }
+    .icon-btn:hover svg, .sidebar-btn:hover svg, .nav-btn:hover svg {
+      filter: drop-shadow(0 0 8px currentColor);
     }
   </style>
 </head>
@@ -145,7 +452,7 @@
   <canvas id="particles-canvas"></canvas>
 
   <!-- ============================================================
-       شاشة التسجيل / تسجيل الدخول (خطوة بخطوة)
+       شاشة التسجيل / تسجيل الدخول (خطوة بخطوة مع تحسينات)
        ============================================================ -->
   <div id="screen-register" class="screen active">
     <div class="register-container">
@@ -187,7 +494,7 @@
       <!-- لوحة إنشاء الحساب (خطوة بخطوة) -->
       <div id="auth-panel-register" class="register-card">
 
-        <h2 class="register-title">ابدأ مغامرتك</h2>
+        <h2 class="register-title">انطلق في عالم الجواسيس</h2>
 
         <!-- مؤشرات الخطوات -->
         <div class="step-indicators">
@@ -246,7 +553,7 @@
             <p style="color:var(--gold);font-size:0.75rem">اضغط "إنشاء الحساب" للبدء</p>
             <div id="register-summary" style="font-size:0.75rem;color:var(--text-dim);margin:6px 0"></div>
           </div>
-          <button id="btn-register" class="btn btn-primary btn-glow">إنشاء الحساب</button>
+          <button id="btn-register" class="btn btn-primary">إنشاء الحساب</button>
           <div id="register-error" class="error-msg hidden"></div>
           <div class="step-nav">
             <button class="btn btn-ghost step-prev" data-prev="3">السابق</button>
@@ -775,7 +1082,7 @@
   </div>
 
   <!-- ============================================================
-       النوافذ المنبثقة (Modals)
+       النوافذ المنبثقة (Modals - مختصرة للطول)
        ============================================================ -->
 
   <!-- إنشاء غرفة -->
@@ -1109,10 +1416,9 @@
   </div>
 
   <!-- ============================================================
-       اللوحات الجانبية (Side Panels)
+       اللوحات الجانبية (Side Panels - مختصرة للطول)
        ============================================================ -->
 
-  <!-- الأصدقاء -->
   <div id="panel-friends" class="side-panel hidden">
     <div class="side-panel-header">
       <h3>الأصدقاء</h3>
@@ -1135,7 +1441,6 @@
     </div>
   </div>
 
-  <!-- المخزون -->
   <div id="panel-inventory" class="side-panel wide-panel hidden">
     <div class="side-panel-header">
       <h3>المخزون</h3>
@@ -1177,7 +1482,6 @@
     </div>
   </div>
 
-  <!-- المهام -->
   <div id="panel-missions" class="side-panel wide-panel hidden">
     <div class="side-panel-header">
       <h3>المهام</h3>
@@ -1193,7 +1497,6 @@
     <div id="missions-challenges" class="missions-panel panel-tab-content hidden"></div>
   </div>
 
-  <!-- الكلانات -->
   <div id="panel-clans" class="side-panel wide-panel hidden">
     <div class="side-panel-header">
       <h3>الكلانات</h3>
@@ -1223,7 +1526,6 @@
     </div>
   </div>
 
-  <!-- الإشعارات -->
   <div id="panel-notifications" class="side-panel hidden">
     <div class="side-panel-header">
       <h3>الإشعارات</h3>
@@ -1233,7 +1535,6 @@
     <div id="notifications-list" class="notifications-list"></div>
   </div>
 
-  <!-- السوق -->
   <div id="panel-market" class="side-panel wide-panel hidden">
     <div class="side-panel-header">
       <h3>السوق</h3>
@@ -1254,7 +1555,6 @@
     </div>
   </div>
 
-  <!-- الإعدادات -->
   <div id="panel-settings" class="side-panel hidden">
     <div class="side-panel-header">
       <h3>الإعدادات</h3>
@@ -1300,7 +1600,6 @@
     </div>
   </div>
 
-  <!-- الدردشة العامة -->
   <div id="panel-global-chat" class="side-panel hidden">
     <div class="side-panel-header">
       <h3>الدردشة العامة</h3>
@@ -1318,7 +1617,6 @@
     </div>
   </div>
 
-  <!-- لوحة المطور -->
   <div id="panel-devpanel" class="side-panel wide-panel hidden">
     <div class="side-panel-header dev-header">
       <h3>لوحة القائد</h3>
@@ -1361,14 +1659,12 @@
       <div id="dev-missions-list" class="dev-list"></div>
     </div>
     <div id="dev-broadcast" class="dev-section panel-tab-content hidden">
-      <!-- رسالة خاصة -->
       <div class="form-group" style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:8px;padding:12px;margin-bottom:12px">
         <label style="color:var(--blue)">رسالة خاصة</label>
         <input id="dev-msg-player-id" type="text" placeholder="معرف اللاعب" class="input-sm" style="margin-top:8px;margin-bottom:8px" />
         <textarea id="dev-msg-content" rows="2" placeholder="نص الرسالة..." class="input-sm"></textarea>
         <button class="btn btn-blue btn-sm" style="margin-top:8px" onclick="Admin.sendMessageToPlayer()">إرسال</button>
       </div>
-      <!-- إشعار -->
       <div class="form-group">
         <label>إشعار</label>
         <input id="dev-notif-player-id" type="text" placeholder="معرف اللاعب (اختياري)" class="input-sm" style="margin-bottom:8px" />
@@ -1384,7 +1680,6 @@
     </div>
   </div>
 
-  <!-- المستويات -->
   <div id="panel-levels" class="side-panel wide-panel hidden">
     <div class="side-panel-header levels-header">
       <h3>مسار التطور</h3>
@@ -1398,7 +1693,6 @@
     </div>
   </div>
 
-  <!-- تفاصيل المستوى -->
   <div id="lvl-detail-popup" class="lvl-detail-popup hidden" onclick="if(event.target===this)this.classList.add('hidden')">
     <div class="lvl-detail-card">
       <button class="lvl-detail-close" onclick="document.getElementById('lvl-detail-popup').classList.add('hidden')">&times;</button>
@@ -1415,7 +1709,6 @@
        الطبقات المنبثقة (Overlays)
        ============================================================ -->
 
-  <!-- التعليمات -->
   <div id="overlay-tutorial" class="overlay hidden">
     <div class="overlay-card tutorial-card">
       <div class="tutorial-header">
@@ -1456,7 +1749,6 @@
     </div>
   </div>
 
-  <!-- إشعار الأسطوري -->
   <div id="overlay-legendary" class="legendary-overlay hidden">
     <div class="legendary-content">
       <div class="legendary-particles" id="legendary-particles"></div>
@@ -1471,7 +1763,6 @@
     </div>
   </div>
 
-  <!-- نهاية اللعبة -->
   <div id="overlay-game-over" class="overlay hidden">
     <div class="overlay-card game-over-card">
       <div class="game-over-icon" id="game-over-icon"></div>
@@ -1486,7 +1777,6 @@
     </div>
   </div>
 
-  <!-- إعادة الاتصال -->
   <div id="overlay-reconnect" class="overlay hidden">
     <div class="overlay-card reconnect-card">
       <h3>إعادة الاتصال؟</h3>
@@ -1523,4 +1813,4 @@
   <script src="js/app.js"></script>
 
 </body>
-          </html>
+  </html>
