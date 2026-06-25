@@ -13,81 +13,24 @@
   <link rel="stylesheet" href="css/style.css" />
   <style>
     /* ===== تحسينات إضافية للـ index ===== */
-
-    /* خلفيات */
-    .register-container {
-      background-image: url('assets/images/register-bg.jpg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-    #screen-menu {
-      background-image: url('assets/images/main-bg.jpg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-    .lobby-container {
-      background-image: url('assets/images/lobby-bg.jpg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-    body.solo-mode {
-      background-image: url('assets/images/solo-bg.jpg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-    body.classic-mode {
-      background-image: url('assets/images/classic-bg.jpg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-
-    /* طبقة شفافة فوق الخلفيات */
-    .register-container::before,
-    #screen-menu::before,
-    .lobby-container::before,
-    body.solo-mode::before,
-    body.classic-mode::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      pointer-events: none;
-      z-index: 0;
-    }
-    .register-container > *,
-    #screen-menu > *,
-    .lobby-container > *,
-    body.solo-mode > *,
-    body.classic-mode > * {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* تسجيل الدخول - خطوة بخطوة */
     .register-step {
       display: none;
-    }
-    .register-step.active {
-      display: flex;
       flex-direction: column;
       gap: 12px;
       animation: fadeStep 0.3s ease;
     }
+    .register-step.active {
+      display: flex;
+    }
     @keyframes fadeStep {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
     .step-indicators {
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .step-dot {
       width: 10px;
@@ -104,7 +47,9 @@
     .step-dot.done {
       background: var(--green);
     }
-
+    .step-dot.error {
+      background: var(--red);
+    }
     .step-nav {
       display: flex;
       gap: 8px;
@@ -113,16 +58,28 @@
     .step-nav .btn {
       flex: 1;
       font-size: 0.82rem;
-      padding: 8px;
+      padding: 8px 12px;
+    }
+    .step-nav .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .validation-msg {
+      font-size: 0.7rem;
+      min-height: 1.2rem;
+      display: block;
+      margin-top: 2px;
+    }
+    .validation-msg.success {
+      color: var(--green);
+    }
+    .validation-msg.error {
+      color: var(--red);
+    }
+    .validation-msg.loading {
+      color: var(--blue);
     }
 
-    .register-card {
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 16px 20px;
-    }
-
-    /* تحسينات للموبايل */
     @media (max-width: 768px) {
       .register-card {
         padding: 12px 14px;
@@ -146,8 +103,11 @@
         font-size: 0.7rem;
         padding: 6px;
       }
+      .step-dot {
+        width: 8px;
+        height: 8px;
+      }
     }
-
     @media (max-width: 480px) {
       .register-card {
         padding: 8px 10px;
@@ -185,7 +145,7 @@
   <canvas id="particles-canvas"></canvas>
 
   <!-- ============================================================
-       شاشة التسجيل / تسجيل الدخول
+       شاشة التسجيل / تسجيل الدخول (خطوة بخطوة)
        ============================================================ -->
   <div id="screen-register" class="screen active">
     <div class="register-container">
@@ -212,11 +172,13 @@
         <h2 class="register-title">مرحباً بعودتك</h2>
         <div class="form-group">
           <label>اسم المستخدم</label>
-          <input id="login-nickname" type="text" placeholder="اسمك المستعار" maxlength="20" autocomplete="username" />
+          <input id="login-nickname" type="text" placeholder="اسمك المستعار" maxlength="20" />
+          <span class="validation-msg" id="login-name-error"></span>
         </div>
         <div class="form-group">
           <label>كلمة المرور</label>
-          <input id="login-password" type="password" placeholder="كلمة المرور" autocomplete="current-password" />
+          <input id="login-password" type="password" placeholder="كلمة المرور" />
+          <span class="validation-msg" id="login-pass-error"></span>
         </div>
         <button id="btn-login" class="btn btn-primary btn-glow">دخول</button>
         <div id="login-error" class="error-msg hidden"></div>
@@ -224,6 +186,7 @@
 
       <!-- لوحة إنشاء الحساب (خطوة بخطوة) -->
       <div id="auth-panel-register" class="register-card">
+
         <h2 class="register-title">ابدأ مغامرتك</h2>
 
         <!-- مؤشرات الخطوات -->
@@ -234,27 +197,29 @@
           <span class="step-dot" data-step="4"></span>
         </div>
 
-        <!-- الخطوة 1: الاسم -->
+        <!-- ===== الخطوة 1: اسم المستخدم ===== -->
         <div class="register-step active" data-step="1">
           <div class="form-group">
             <label>اسمك المستعار</label>
-            <input id="reg-nickname" type="text" placeholder="3-20 حرف" maxlength="20" autocomplete="username" />
-            <span class="input-hint">مثال: جاسوس_المصري أو Agent-X</span>
+            <input id="reg-nickname" type="text" placeholder="3-20 حرف (عربي/إنجليزي/-)" maxlength="20" />
+            <span class="validation-msg" id="reg-name-error"></span>
           </div>
           <div class="step-nav">
             <button class="btn btn-primary step-next" data-next="2">التالي</button>
           </div>
         </div>
 
-        <!-- الخطوة 2: كلمة المرور -->
+        <!-- ===== الخطوة 2: كلمة المرور ===== -->
         <div class="register-step" data-step="2">
           <div class="form-group">
             <label>كلمة المرور</label>
-            <input id="reg-password" type="password" placeholder="6 أحرف على الأقل" autocomplete="new-password" />
+            <input id="reg-password" type="password" placeholder="6 أحرف على الأقل" />
+            <span class="validation-msg" id="reg-pass-error"></span>
           </div>
           <div class="form-group">
             <label>تأكيد كلمة المرور</label>
-            <input id="reg-password2" type="password" placeholder="أعد كتابة كلمة المرور" autocomplete="new-password" />
+            <input id="reg-password2" type="password" placeholder="أعد كتابة كلمة المرور" />
+            <span class="validation-msg" id="reg-pass2-error"></span>
           </div>
           <div class="step-nav">
             <button class="btn btn-ghost step-prev" data-prev="1">السابق</button>
@@ -262,7 +227,7 @@
           </div>
         </div>
 
-        <!-- الخطوة 3: اختيار الأفاتار -->
+        <!-- ===== الخطوة 3: اختيار الأفاتار ===== -->
         <div class="register-step" data-step="3">
           <div class="avatar-section">
             <label>اختر شخصيتك</label>
@@ -274,11 +239,12 @@
           </div>
         </div>
 
-        <!-- الخطوة 4: تأكيد وإنشاء -->
+        <!-- ===== الخطوة 4: تأكيد وإنشاء ===== -->
         <div class="register-step" data-step="4">
-          <div style="text-align:center;padding:8px 0">
-            <p style="color:var(--text-dim);font-size:0.9rem">جميع البيانات جاهزة!</p>
-            <p style="color:var(--gold);font-size:0.8rem">اضغط "إنشاء الحساب" للبدء</p>
+          <div style="text-align:center;padding:6px 0">
+            <p style="color:var(--text-dim);font-size:0.85rem">جميع البيانات جاهزة!</p>
+            <p style="color:var(--gold);font-size:0.75rem">اضغط "إنشاء الحساب" للبدء</p>
+            <div id="register-summary" style="font-size:0.75rem;color:var(--text-dim);margin:6px 0"></div>
           </div>
           <button id="btn-register" class="btn btn-primary btn-glow">إنشاء الحساب</button>
           <div id="register-error" class="error-msg hidden"></div>
@@ -426,6 +392,7 @@
           </div>
         </div>
 
+        <!-- قائمة الغرف النشطة -->
         <div class="rooms-list-section">
           <div class="rooms-list-header">
             <span class="rooms-list-title">
@@ -529,11 +496,11 @@
   </div>
 
   <!-- ============================================================
-       بقية الأقسام (مختصرة للطول، لكنها موجودة)
+       شاشة اللعبة
        ============================================================ -->
-
-  <!-- شاشة اللعبة -->
   <div id="screen-game" class="screen hidden">
+
+    <!-- هيدر اللعبة -->
     <header class="game-header">
       <div class="game-info-left">
         <span id="game-room-name" class="game-room-name">الغرفة</span>
@@ -551,8 +518,14 @@
         </div>
       </div>
       <div class="game-score-right">
-        <div class="score-card red"><span id="red-score">0</span><span class="score-dot red"></span></div>
-        <div class="score-card blue"><span class="score-dot blue"></span><span id="blue-score">0</span></div>
+        <div class="score-card red">
+          <span id="red-score">0</span>
+          <span class="score-dot red"></span>
+        </div>
+        <div class="score-card blue">
+          <span class="score-dot blue"></span>
+          <span id="blue-score">0</span>
+        </div>
         <button class="btn-leave" id="btn-leave-game" title="مغادرة">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#ff0040" stroke-width="2">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -562,199 +535,880 @@
         </button>
       </div>
     </header>
-    <main class="game-main">
-      <div class="team-panel red"><div class="team-header red"><span>الفريق الأحمر</span><span class="team-cards-left" id="red-cards-left">0</span></div><div class="team-members" id="red-team-members"></div></div>
-      <div class="cards-area">
-        <div id="cards-grid" class="cards-grid grid-25"></div>
-        <div id="hint-form" class="hint-form hidden"><div class="hint-form-inner"><input id="hint-word-input" type="text" placeholder="كلمة التلميح..." maxlength="30" autocomplete="off" /><input id="hint-count-input" type="number" min="1" max="9" value="1" /><button id="btn-send-hint" class="btn btn-primary btn-sm">إرسال</button></div></div>
-        <div id="end-turn-wrap" class="end-turn-wrap hidden"><button id="btn-end-turn" class="btn btn-warning btn-sm">إنهاء الدور</button><button id="btn-end-operative-turn" class="btn btn-danger btn-sm hidden">إنهاء دور اللاعبين</button></div>
-      </div>
-      <div class="team-panel blue"><div class="team-header blue"><span>الفريق الأزرق</span><span class="team-cards-left" id="blue-cards-left">0</span></div><div class="team-members" id="blue-team-members"></div></div>
-    </main>
-    <div class="game-bottom">
-      <div class="log-header"><button class="log-tab active" data-tab="log">السجل</button><button class="log-tab" data-tab="chat-all">الكل</button><button class="log-tab" data-tab="chat-team">الفريق</button></div>
-      <div id="game-log" class="game-log"></div><div id="game-chat-all" class="game-chat hidden"></div><div id="game-chat-team" class="game-chat hidden"></div>
-      <div class="chat-input-row"><select id="chat-channel" class="chat-channel-select"><option value="all">الكل</option><option value="team">الفريق</option></select><input id="chat-input" type="text" placeholder="اكتب رسالة..." maxlength="200" autocomplete="off" /><button id="btn-send-chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
-    </div>
-  </div>
 
-  <!-- لوبي الغرفة -->
-  <div id="screen-lobby" class="screen hidden">
-    <div class="lobby-container">
-      <div class="lobby-header">
-        <div class="lobby-title-area"><h2 id="lobby-room-name">الغرفة</h2><div class="lobby-code-wrap"><span>كود الغرفة:</span><span id="lobby-room-code" class="lobby-code">------</span><button class="btn-icon-small" id="btn-copy-code" title="نسخ"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div></div>
-        <button class="btn btn-danger btn-sm" id="btn-leave-lobby">مغادرة</button>
+    <!-- جسم اللعبة -->
+    <main class="game-main">
+
+      <!-- لوحة الفريق الأحمر -->
+      <div class="team-panel red">
+        <div class="team-header red">
+          <span>الفريق الأحمر</span>
+          <span class="team-cards-left" id="red-cards-left">0</span>
+        </div>
+        <div class="team-members" id="red-team-members"></div>
       </div>
-      <div class="lobby-main">
-        <div class="team-selection" id="lobby-team-selection">
-          <div class="team-col red" id="classic-red-col"><div class="team-col-header red">الفريق الأحمر</div><div class="role-section"><div class="role-label">البوص</div><div id="red-spymaster-slot" class="player-slot"><span>فارغ</span></div><button class="btn btn-sm btn-red" data-team="red" data-role="spymaster">انضم كبوص</button></div><div class="role-section"><div class="role-label">العملاء</div><div id="red-operatives-slots" class="player-slots"><span class="text-dim" style="font-size:0.7rem">فارغ</span></div><button class="btn btn-sm btn-red" data-team="red" data-role="operative">انضم كعميل</button></div></div>
-          <div class="team-col blue" id="classic-blue-col"><div class="team-col-header blue">الفريق الأزرق</div><div class="role-section"><div class="role-label">البوص</div><div id="blue-spymaster-slot" class="player-slot"><span>فارغ</span></div><button class="btn btn-sm btn-blue" data-team="blue" data-role="spymaster">انضم كبوص</button></div><div class="role-section"><div class="role-label">العملاء</div><div id="blue-operatives-slots" class="player-slots"><span class="text-dim" style="font-size:0.7rem">فارغ</span></div><button class="btn btn-sm btn-blue" data-team="blue" data-role="operative">انضم كعميل</button></div></div>
-          <div class="team-col solo-col hidden" id="solo-spymaster-col"><div class="team-col-header gold">البوص</div><div class="role-section"><div id="solo-spymaster-slot" class="player-slot"><span>فارغ</span></div><button class="btn btn-sm btn-gold" id="btn-solo-spymaster">انضم كبوص</button></div></div>
-          <div class="team-col solo-col hidden" id="solo-players-col"><div class="team-col-header blue">اللاعبين</div><div class="role-section"><div id="solo-operatives-slots" class="player-slots"><span class="text-dim" style="font-size:0.7rem">فارغ</span></div><button class="btn btn-sm btn-blue" id="btn-solo-operative">انضم كلاعب</button></div></div>
-          <div class="lobby-center-col">
-            <div class="lobby-settings"><div class="setting-row"><span>عدد البطاقات</span><select id="lobby-card-count" class="setting-select"><option value="25">25 (5x5)</option><option value="20">20 (4x5)</option><option value="15">15 (3x5)</option></select></div><div class="setting-row"><span>الوضع</span><select id="lobby-mode" class="setting-select"><option value="classic">كلاسيك (زوجي)</option><option value="solo">سولو (فردي)</option></select></div></div>
-            <button id="btn-start-game" class="btn btn-primary btn-glow btn-start-game hidden">ابدأ اللعبة</button>
-            <div class="lobby-invite-wrap"><button class="btn-outline" id="btn-invite-friend-lobby"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> دعوة صديق</button></div>
-            <div class="spectators-section"><div class="spectators-label">المشاهدون</div><div id="spectators-list" class="spectators-list"><span class="text-dim">لا أحد</span></div><button class="btn btn-sm btn-ghost" id="btn-join-spectator">مشاهد</button></div>
+
+      <!-- منطقة البطاقات -->
+      <div class="cards-area">
+        <div id="cards-grid" class="cards-grid grid-25">
+          <!-- سيتم تعبئتها بواسطة JavaScript -->
+        </div>
+
+        <!-- نموذج التلميح (للبوص) -->
+        <div id="hint-form" class="hint-form hidden">
+          <div class="hint-form-inner">
+            <input id="hint-word-input" type="text" placeholder="كلمة التلميح..." maxlength="30" autocomplete="off" />
+            <input id="hint-count-input" type="number" min="1" max="9" value="1" />
+            <button id="btn-send-hint" class="btn btn-primary btn-sm">إرسال</button>
           </div>
         </div>
-        <div class="lobby-chat"><div id="lobby-chat-messages" class="lobby-chat-messages"></div><div class="lobby-chat-input-row"><input id="lobby-chat-input" type="text" placeholder="اكتب رسالة..." maxlength="200" /><button id="btn-lobby-chat-send"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div></div>
+
+        <!-- أزرار إنهاء الدور -->
+        <div id="end-turn-wrap" class="end-turn-wrap hidden">
+          <button id="btn-end-turn" class="btn btn-warning btn-sm">إنهاء الدور</button>
+          <button id="btn-end-operative-turn" class="btn btn-danger btn-sm hidden">إنهاء دور اللاعبين</button>
+        </div>
+      </div>
+
+      <!-- لوحة الفريق الأزرق -->
+      <div class="team-panel blue">
+        <div class="team-header blue">
+          <span>الفريق الأزرق</span>
+          <span class="team-cards-left" id="blue-cards-left">0</span>
+        </div>
+        <div class="team-members" id="blue-team-members"></div>
+      </div>
+    </main>
+
+    <!-- الدردشة والسجل -->
+    <div class="game-bottom">
+      <div class="log-header">
+        <button class="log-tab active" data-tab="log">السجل</button>
+        <button class="log-tab" data-tab="chat-all">الكل</button>
+        <button class="log-tab" data-tab="chat-team">الفريق</button>
+      </div>
+      <div id="game-log" class="game-log"></div>
+      <div id="game-chat-all" class="game-chat hidden"></div>
+      <div id="game-chat-team" class="game-chat hidden"></div>
+      <div class="chat-input-row">
+        <select id="chat-channel" class="chat-channel-select">
+          <option value="all">الكل</option>
+          <option value="team">الفريق</option>
+        </select>
+        <input id="chat-input" type="text" placeholder="اكتب رسالة..." maxlength="200" autocomplete="off" />
+        <button id="btn-send-chat">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
       </div>
     </div>
   </div>
 
   <!-- ============================================================
-       النوافذ المنبثقة (Modals) - مختصرة
+       لوبي الغرفة
+       ============================================================ -->
+  <div id="screen-lobby" class="screen hidden">
+    <div class="lobby-container">
+
+      <!-- هيدر اللوبي -->
+      <div class="lobby-header">
+        <div class="lobby-title-area">
+          <h2 id="lobby-room-name">الغرفة</h2>
+          <div class="lobby-code-wrap">
+            <span>كود الغرفة:</span>
+            <span id="lobby-room-code" class="lobby-code">------</span>
+            <button class="btn-icon-small" id="btn-copy-code" title="نسخ">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <button class="btn btn-danger btn-sm" id="btn-leave-lobby">مغادرة</button>
+      </div>
+
+      <!-- جسم اللوبي -->
+      <div class="lobby-main">
+
+        <!-- اختيار الفريق -->
+        <div class="team-selection" id="lobby-team-selection">
+
+          <!-- الفريق الأحمر (كلاسيك) -->
+          <div class="team-col red" id="classic-red-col">
+            <div class="team-col-header red">الفريق الأحمر</div>
+            <div class="role-section">
+              <div class="role-label">البوص (Spymaster)</div>
+              <div id="red-spymaster-slot" class="player-slot">
+                <span>فارغ</span>
+              </div>
+              <button class="btn btn-sm btn-red" data-team="red" data-role="spymaster">انضم كبوص</button>
+            </div>
+            <div class="role-section">
+              <div class="role-label">العملاء (Operatives)</div>
+              <div id="red-operatives-slots" class="player-slots">
+                <span class="text-dim" style="font-size:0.7rem">فارغ</span>
+              </div>
+              <button class="btn btn-sm btn-red" data-team="red" data-role="operative">انضم كعميل</button>
+            </div>
+            <!-- زر طرد الأعضاء (للأدمن) -->
+            <div class="role-section" style="border-color:var(--border-red);margin-top:4px">
+              <div class="role-label" style="color:var(--red)">إدارة الفريق</div>
+              <button class="btn btn-sm btn-danger" onclick="Game.kickFromTeam('red')" style="font-size:0.65rem">طرد لاعب</button>
+            </div>
+          </div>
+
+          <!-- الفريق الأزرق (كلاسيك) -->
+          <div class="team-col blue" id="classic-blue-col">
+            <div class="team-col-header blue">الفريق الأزرق</div>
+            <div class="role-section">
+              <div class="role-label">البوص (Spymaster)</div>
+              <div id="blue-spymaster-slot" class="player-slot">
+                <span>فارغ</span>
+              </div>
+              <button class="btn btn-sm btn-blue" data-team="blue" data-role="spymaster">انضم كبوص</button>
+            </div>
+            <div class="role-section">
+              <div class="role-label">العملاء (Operatives)</div>
+              <div id="blue-operatives-slots" class="player-slots">
+                <span class="text-dim" style="font-size:0.7rem">فارغ</span>
+              </div>
+              <button class="btn btn-sm btn-blue" data-team="blue" data-role="operative">انضم كعميل</button>
+            </div>
+            <!-- زر طرد الأعضاء (للأدمن) -->
+            <div class="role-section" style="border-color:var(--border-blue);margin-top:4px">
+              <div class="role-label" style="color:var(--blue)">إدارة الفريق</div>
+              <button class="btn btn-sm btn-danger" onclick="Game.kickFromTeam('blue')" style="font-size:0.65rem">طرد لاعب</button>
+            </div>
+          </div>
+
+          <!-- وضع السولو: البوص -->
+          <div class="team-col solo-col hidden" id="solo-spymaster-col">
+            <div class="team-col-header gold">البوص (Spymaster)</div>
+            <div class="role-section">
+              <div class="role-label">البوص</div>
+              <div id="solo-spymaster-slot" class="player-slot">
+                <span>فارغ</span>
+              </div>
+              <button class="btn btn-sm btn-gold" id="btn-solo-spymaster">انضم كبوص</button>
+            </div>
+          </div>
+
+          <!-- وضع السولو: اللاعبين -->
+          <div class="team-col solo-col hidden" id="solo-players-col">
+            <div class="team-col-header blue">اللاعبين (Operatives)</div>
+            <div class="role-section">
+              <div class="role-label">اللاعبين</div>
+              <div id="solo-operatives-slots" class="player-slots">
+                <span class="text-dim" style="font-size:0.7rem">فارغ</span>
+              </div>
+              <button class="btn btn-sm btn-blue" id="btn-solo-operative">انضم كلاعب</button>
+            </div>
+            <!-- زر طرد لاعب (للأدمن) -->
+            <div class="role-section" style="border-color:var(--border-blue);margin-top:4px">
+              <div class="role-label" style="color:var(--blue)">إدارة اللاعبين</div>
+              <button class="btn btn-sm btn-danger" onclick="Game.kickFromSolo()" style="font-size:0.65rem">طرد لاعب</button>
+            </div>
+          </div>
+
+          <!-- العمود الأوسط: الإعدادات -->
+          <div class="lobby-center-col">
+            <div class="lobby-settings">
+              <div class="setting-row">
+                <span>عدد البطاقات</span>
+                <select id="lobby-card-count" class="setting-select">
+                  <option value="25">25 (5x5)</option>
+                  <option value="20">20 (4x5)</option>
+                  <option value="15">15 (3x5)</option>
+                </select>
+              </div>
+              <div class="setting-row">
+                <span>الوضع</span>
+                <select id="lobby-mode" class="setting-select">
+                  <option value="classic">كلاسيك (زوجي)</option>
+                  <option value="solo">سولو (فردي)</option>
+                </select>
+              </div>
+            </div>
+
+            <button id="btn-start-game" class="btn btn-primary btn-glow btn-start-game hidden">ابدأ اللعبة</button>
+
+            <div class="lobby-invite-wrap">
+              <button class="btn-outline" id="btn-invite-friend-lobby">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <line x1="20" y1="8" x2="20" y2="14" />
+                  <line x1="23" y1="11" x2="17" y2="11" />
+                </svg>
+                دعوة صديق
+              </button>
+            </div>
+
+            <div class="spectators-section">
+              <div class="spectators-label">المشاهدون</div>
+              <div id="spectators-list" class="spectators-list">
+                <span class="text-dim">لا أحد</span>
+              </div>
+              <button class="btn btn-sm btn-ghost" id="btn-join-spectator" style="margin-top:4px;font-size:0.7rem">انضم كمشاهد</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- دردشة اللوبي -->
+        <div class="lobby-chat">
+          <div id="lobby-chat-messages" class="lobby-chat-messages"></div>
+          <div class="lobby-chat-input-row">
+            <input id="lobby-chat-input" type="text" placeholder="اكتب رسالة..." maxlength="200" />
+            <button id="btn-lobby-chat-send">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       النوافذ المنبثقة (Modals)
        ============================================================ -->
 
   <!-- إنشاء غرفة -->
   <div id="modal-create-room" class="modal hidden">
     <div class="modal-card">
-      <div class="modal-header"><h3>إنشاء غرفة جديدة</h3><button class="modal-close" data-modal="modal-create-room">&times;</button></div>
-      <div class="modal-body">
-        <div class="form-group"><label>اسم الغرفة</label><input id="create-room-name" type="text" placeholder="اسم الغرفة..." maxlength="30" /></div>
-        <div class="form-group"><label>كلمة المرور (اختيارية)</label><input id="create-room-password" type="password" placeholder="اتركها فارغة" maxlength="20" /></div>
-        <div class="form-group"><label>الوضع</label><div class="radio-group"><label class="radio-label"><input type="radio" name="game-mode" value="classic" checked /> كلاسيك (زوجي)</label><label class="radio-label"><input type="radio" name="game-mode" value="solo" /> سولو (فردي)</label></div></div>
-        <div class="form-group"><label>عدد البطاقات</label><div class="radio-group" id="card-count-options"><label class="radio-label"><input type="radio" name="card-count" value="25" checked /> 25 (5×5)</label><label class="radio-label" data-mode="solo"><input type="radio" name="card-count" value="20" /> 20 (4×5)</label><label class="radio-label" data-mode="solo"><input type="radio" name="card-count" value="15" /> 15 (3×5)</label></div><span class="input-hint" id="card-count-hint">شبكة ثابتة 25 بطاقة في الوضع الزوجي</span></div>
-        <div class="form-group"><label>نوع الغرفة</label><div class="radio-group"><label class="radio-label"><input type="radio" name="room-type" value="public" checked /> عامة</label><label class="radio-label"><input type="radio" name="room-type" value="private" /> خاصة (برمز)</label></div></div>
+      <div class="modal-header">
+        <h3>إنشاء غرفة جديدة</h3>
+        <button class="modal-close" data-modal="modal-create-room">&times;</button>
       </div>
-      <div class="modal-footer"><button id="btn-confirm-create-room" class="btn btn-primary btn-glow">إنشاء</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>اسم الغرفة</label>
+          <input id="create-room-name" type="text" placeholder="اسم الغرفة..." maxlength="30" />
+        </div>
+        <div class="form-group">
+          <label>كلمة المرور (اختيارية)</label>
+          <input id="create-room-password" type="password" placeholder="اتركها فارغة للغرفة العامة" maxlength="20" />
+        </div>
+        <div class="form-group">
+          <label>الوضع</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="game-mode" value="classic" checked onchange="Game.onGameModeChange(this.value)" />
+              كلاسيك (زوجي)
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="game-mode" value="solo" onchange="Game.onGameModeChange(this.value)" />
+              سولو (فردي)
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>عدد البطاقات</label>
+          <div class="radio-group" id="card-count-options">
+            <label class="radio-label">
+              <input type="radio" name="card-count" value="25" checked />
+              25 (5×5)
+            </label>
+            <label class="radio-label" data-mode="solo">
+              <input type="radio" name="card-count" value="20" />
+              20 (4×5)
+            </label>
+            <label class="radio-label" data-mode="solo">
+              <input type="radio" name="card-count" value="15" />
+              15 (3×5)
+            </label>
+          </div>
+          <span class="input-hint" id="card-count-hint">شبكة ثابتة 25 بطاقة في الوضع الزوجي</span>
+        </div>
+        <div class="form-group">
+          <label>نوع الغرفة</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="room-type" value="public" checked />
+              عامة
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="room-type" value="private" />
+              خاصة (برمز)
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-create-room" class="btn btn-primary btn-glow">إنشاء الغرفة</button>
+      </div>
     </div>
   </div>
 
-  <!-- انضم لغرفة -->
+  <!-- الانضمام لغرفة -->
   <div id="modal-join-room" class="modal hidden">
     <div class="modal-card modal-wide">
-      <div class="modal-header"><h3>انضم لغرفة</h3><button class="modal-close" data-modal="modal-join-room">&times;</button></div>
-      <div class="modal-body">
-        <div class="form-group"><label>كود الغرفة</label><input id="join-room-code" type="text" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-size:1.4rem" /></div>
-        <div class="form-group"><label>كلمة المرور</label><input id="join-room-password" type="password" placeholder="اتركها فارغة" /></div>
-        <div id="join-private-code-wrap" style="display:none"><div class="form-group"><label>رمز الغرفة الخاصة</label><input id="join-private-code" type="text" placeholder="أدخل الرمز..." maxlength="6" /></div></div>
-        <div class="rooms-list-section-modal"><div class="section-header"><span>الغرف المتاحة</span><label class="toggle-label"><input type="checkbox" id="hide-full-rooms" /><span>إخفاء الممتلئة</span></label></div><div id="public-rooms-list" class="public-rooms-list public-rooms-modal"><div class="rooms-loading"><span class="spinner"></span><span>جاري التحديث...</span></div></div></div>
+      <div class="modal-header">
+        <h3>انضم لغرفة</h3>
+        <button class="modal-close" data-modal="modal-join-room">&times;</button>
       </div>
-      <div class="modal-footer"><button id="btn-confirm-join-room" class="btn btn-primary btn-glow">انضم</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>كود الغرفة</label>
+          <input id="join-room-code" type="text" placeholder="مثال: ABC123" maxlength="6"
+                 style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-size:1.4rem" />
+        </div>
+        <div class="form-group">
+          <label>كلمة المرور (إن وجدت)</label>
+          <input id="join-room-password" type="password" placeholder="اتركها فارغة" />
+        </div>
+        <div id="join-private-code-wrap" style="display:none">
+          <div class="form-group">
+            <label>رمز الغرفة الخاصة</label>
+            <input id="join-private-code" type="text" placeholder="أدخل الرمز الخاص..." maxlength="6" />
+          </div>
+        </div>
+        <div class="rooms-list-section-modal">
+          <div class="section-header">
+            <span>الغرف المتاحة</span>
+            <label class="toggle-label">
+              <input type="checkbox" id="hide-full-rooms" />
+              <span>إخفاء الممتلئة</span>
+            </label>
+          </div>
+          <div id="public-rooms-list" class="public-rooms-list public-rooms-modal">
+            <div class="rooms-loading">
+              <span class="spinner"></span>
+              <span>جاري التحديث...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-join-room" class="btn btn-primary btn-glow">انضم الآن</button>
+      </div>
     </div>
   </div>
 
   <!-- تأكيد -->
   <div id="modal-confirm" class="modal modal-dialog hidden">
     <div class="modal-card dialog-card">
-      <div class="dialog-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-      <div id="confirm-message" class="dialog-msg"></div>
-      <div class="dialog-actions"><button id="confirm-yes" class="btn btn-primary">نعم</button><button id="confirm-no" class="btn btn-ghost">لا</button></div>
+      <div class="dialog-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
+      <div id="confirm-message" class="dialog-msg">هل أنت متأكد؟</div>
+      <div class="dialog-actions">
+        <button id="confirm-yes" class="btn btn-primary">نعم</button>
+        <button id="confirm-no" class="btn btn-ghost">لا</button>
+      </div>
     </div>
   </div>
 
   <!-- إدخال -->
   <div id="modal-prompt" class="modal modal-dialog hidden">
     <div class="modal-card dialog-card">
-      <div class="dialog-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+      <div class="dialog-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+        </svg>
+      </div>
       <div id="prompt-message" class="dialog-msg"></div>
       <input id="prompt-input" type="text" class="dialog-input" />
-      <div class="dialog-actions"><button id="prompt-ok" class="btn btn-primary">تأكيد</button><button id="prompt-cancel" class="btn btn-ghost">إلغاء</button></div>
+      <div class="dialog-actions">
+        <button id="prompt-ok" class="btn btn-primary">تأكيد</button>
+        <button id="prompt-cancel" class="btn btn-ghost">إلغاء</button>
+      </div>
     </div>
   </div>
 
   <!-- مخصص -->
   <div id="modal-custom-dialog" class="modal hidden">
-    <div class="modal-card"><div class="modal-header"><h3 id="cus-dlg-title"></h3><button class="modal-close" data-modal="modal-custom-dialog">&times;</button></div><div id="cus-dlg-body" class="modal-body"></div></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="cus-dlg-title"></h3>
+        <button class="modal-close" data-modal="modal-custom-dialog">&times;</button>
+      </div>
+      <div id="cus-dlg-body" class="modal-body"></div>
+    </div>
   </div>
 
   <!-- ملف اللاعب -->
   <div id="modal-player-profile" class="modal hidden">
-    <div class="modal-card"><div class="modal-header"><h3>ملف اللاعب</h3><button class="modal-close" data-modal="modal-player-profile">&times;</button></div><div id="player-profile-content" class="player-profile-content"></div></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>ملف اللاعب</h3>
+        <button class="modal-close" data-modal="modal-player-profile">&times;</button>
+      </div>
+      <div id="player-profile-content" class="player-profile-content"></div>
+    </div>
+  </div>
+
+  <!-- منح القائد -->
+  <div id="modal-grant-player" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>منح اللاعب</h3>
+        <button class="modal-close" data-modal="modal-grant-player">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="grant-player-info" class="grant-player-info"></div>
+        <div class="form-group">
+          <label>عملات</label>
+          <input id="grant-coins" type="number" min="0" value="0" />
+        </div>
+        <div class="form-group">
+          <label>XP</label>
+          <input id="grant-xp" type="number" min="0" value="0" />
+        </div>
+        <input type="hidden" id="grant-player-id" />
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-grant" class="btn btn-primary">منح</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- تحدي جديد -->
+  <div id="modal-new-challenge" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>تحدي جديد</h3>
+        <button class="modal-close" data-modal="modal-new-challenge">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label>الاسم</label><input id="ch-name" type="text" /></div>
+        <div class="form-group"><label>الوصف</label><input id="ch-desc" type="text" /></div>
+        <div class="form-group">
+          <label>الشرط</label>
+          <select id="ch-condition">
+            <option value="wins">انتصارات</option>
+            <option value="hints">تلميحات</option>
+            <option value="correctGuesses">تخمينات</option>
+            <option value="chatMessages">رسائل</option>
+          </select>
+        </div>
+        <div class="form-group"><label>القيمة</label><input id="ch-condition-value" type="number" min="1" value="5" /></div>
+        <div class="form-group">
+          <label>نوع الجائزة</label>
+          <select id="ch-reward-type">
+            <option value="xp">XP</option>
+            <option value="coins">عملات</option>
+            <option value="cardPack">حزمة</option>
+          </select>
+        </div>
+        <div class="form-group"><label>قيمة الجائزة</label><input id="ch-reward-value" type="number" min="1" value="100" /></div>
+        <div class="form-group"><label>تاريخ البداية</label><input id="ch-start" type="date" /></div>
+        <div class="form-group"><label>تاريخ النهاية</label><input id="ch-end" type="date" /></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-challenge" class="btn btn-primary">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- حزمة بطاقات جديدة -->
+  <div id="modal-new-skin" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>حزمة جديدة</h3>
+        <button class="modal-close" data-modal="modal-new-skin">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label>ID</label><input id="skin-id" type="text" /></div>
+        <div class="form-group"><label>الاسم</label><input id="skin-name" type="text" /></div>
+        <div class="form-group"><label>السعر</label><input id="skin-price" type="number" min="100" value="2500" /></div>
+        <div class="form-group">
+          <label>الندرة</label>
+          <select id="skin-rarity">
+            <option value="rare">نادر</option>
+            <option value="epic">فائق</option>
+            <option value="legendary">أسطوري</option>
+            <option value="mythic">خارق</option>
+          </select>
+        </div>
+        <div class="form-group"><label>CSS</label><textarea id="skin-css" rows="4" placeholder="background: ..."></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-skin" class="btn btn-primary">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مهمة جديدة -->
+  <div id="modal-new-mission" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>مهمة جديدة</h3>
+        <button class="modal-close" data-modal="modal-new-mission">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label>الاسم</label><input id="mis-name" type="text" /></div>
+        <div class="form-group"><label>الوصف</label><input id="mis-desc" type="text" /></div>
+        <div class="form-group">
+          <label>النوع</label>
+          <select id="mis-type">
+            <option value="daily">يومية</option>
+            <option value="weekly">أسبوعية</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الشرط</label>
+          <select id="mis-condition">
+            <option value="wins">انتصارات</option>
+            <option value="hints">تلميحات</option>
+            <option value="correctGuesses">تخمينات</option>
+            <option value="chatMessages">رسائل</option>
+          </select>
+        </div>
+        <div class="form-group"><label>القيمة</label><input id="mis-condition-value" type="number" min="1" value="3" /></div>
+        <div class="form-group"><label>XP</label><input id="mis-reward-xp" type="number" min="0" value="50" /></div>
+        <div class="form-group"><label>عملات</label><input id="mis-reward-coins" type="number" min="0" value="100" /></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-mission" class="btn btn-primary">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- إنشاء كلان -->
+  <div id="modal-create-clan" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>إنشاء كلان</h3>
+        <button class="modal-close" data-modal="modal-create-clan">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label>الاسم</label><input id="clan-name" type="text" maxlength="20" /></div>
+        <div class="form-group">
+          <label>الشعار</label>
+          <div class="clan-icons-grid" id="clan-icons-grid"></div>
+        </div>
+        <div class="form-group"><label>الوصف</label><input id="clan-desc" type="text" maxlength="200" /></div>
+        <div class="form-group">
+          <label>نوع الانضمام</label>
+          <div class="radio-group">
+            <label class="radio-label"><input type="radio" name="clan-join" value="open" checked /> مفتوح</label>
+            <label class="radio-label"><input type="radio" name="clan-join" value="request" /> بطلب</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>الحد الأدنى للمستوى</label>
+          <input id="clan-min-level" type="number" min="1" max="100" value="1" />
+        </div>
+        <p class="warning-text">ستُخصم 3000 عملة</p>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-create-clan" class="btn btn-primary">إنشاء</button>
+      </div>
+    </div>
   </div>
 
   <!-- ============================================================
-       اللوحات الجانبية (Side Panels) - مختصرة
+       اللوحات الجانبية (Side Panels)
        ============================================================ -->
 
   <!-- الأصدقاء -->
   <div id="panel-friends" class="side-panel hidden">
-    <div class="side-panel-header"><h3>الأصدقاء</h3><button class="panel-close" data-panel="panel-friends">&times;</button></div>
-    <div class="panel-search"><input id="friend-search-id" type="text" placeholder="ابحث بـ ID..." maxlength="12" /><button id="btn-search-friend" class="btn btn-sm btn-primary">بحث</button></div>
+    <div class="side-panel-header">
+      <h3>الأصدقاء</h3>
+      <button class="panel-close" data-panel="panel-friends">&times;</button>
+    </div>
+    <div class="panel-search">
+      <input id="friend-search-id" type="text" placeholder="ابحث بـ ID..." maxlength="12" />
+      <button id="btn-search-friend" class="btn btn-sm btn-primary">بحث</button>
+    </div>
     <div id="friend-search-result" class="friend-search-result hidden"></div>
-    <div class="panel-tabs"><button class="panel-tab active" data-tab="friends-list">الأصدقاء</button><button class="panel-tab" data-tab="friends-requests">الطلبات <span id="requests-count" class="badge">0</span></button><button class="panel-tab" data-tab="friends-blocked">المحظورون</button></div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="friends-list">الأصدقاء</button>
+      <button class="panel-tab" data-tab="friends-requests">الطلبات <span id="requests-count" class="badge">0</span></button>
+      <button class="panel-tab" data-tab="friends-blocked">المحظورون</button>
+    </div>
     <div id="friends-list" class="panel-tab-content active"></div>
     <div id="friends-requests" class="panel-tab-content hidden"></div>
-    <div id="friends-blocked" class="panel-tab-content hidden"><div id="blocked-list" class="blocked-list"></div></div>
+    <div id="friends-blocked" class="panel-tab-content hidden">
+      <div id="blocked-list" class="blocked-list"></div>
+    </div>
   </div>
 
   <!-- المخزون -->
   <div id="panel-inventory" class="side-panel wide-panel hidden">
-    <div class="side-panel-header"><h3>المخزون</h3><button class="panel-close" data-panel="panel-inventory">&times;</button></div>
-    <div class="panel-tabs"><button class="panel-tab active" data-tab="inv-skins">حزم</button><button class="panel-tab" data-tab="inv-frames">إطارات</button><button class="panel-tab" data-tab="inv-titles">ألقاب</button><button class="panel-tab" data-tab="inv-avatars">أفاتارات</button><button class="panel-tab" data-tab="inv-custom">إعدادات</button></div>
-    <div id="inv-skins" class="inv-grid panel-tab-content active"></div><div id="inv-frames" class="inv-grid panel-tab-content hidden"></div><div id="inv-titles" class="inv-titles panel-tab-content hidden"></div><div id="inv-avatars" class="inv-grid panel-tab-content hidden"></div>
+    <div class="side-panel-header">
+      <h3>المخزون</h3>
+      <button class="panel-close" data-panel="panel-inventory">&times;</button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="inv-skins">حزم</button>
+      <button class="panel-tab" data-tab="inv-frames">إطارات</button>
+      <button class="panel-tab" data-tab="inv-titles">ألقاب</button>
+      <button class="panel-tab" data-tab="inv-avatars">أفاتارات</button>
+      <button class="panel-tab" data-tab="inv-custom">إعدادات</button>
+    </div>
+    <div id="inv-skins" class="inv-grid panel-tab-content active"></div>
+    <div id="inv-frames" class="inv-grid panel-tab-content hidden"></div>
+    <div id="inv-titles" class="inv-titles panel-tab-content hidden"></div>
+    <div id="inv-avatars" class="inv-grid panel-tab-content hidden"></div>
     <div id="inv-custom" class="inv-custom panel-tab-content hidden">
-      <div class="custom-setting" id="legendary-notif-row"><span>إشعار الأسطوري</span><label class="toggle"><input type="checkbox" id="set-legendary-notif" checked /><span class="slider"></span></label></div>
-      <div class="custom-setting"><span>المؤثرات الصوتية</span><label class="toggle"><input type="checkbox" id="set-sound-effects" checked /><span class="slider"></span></label></div>
-      <div class="custom-setting"><span>الاهتزاز</span><label class="toggle"><input type="checkbox" id="set-vibration" checked /><span class="slider"></span></label></div>
-      <div class="custom-setting"><span>إشعارات الدفع</span><label class="toggle"><input type="checkbox" id="set-push-notif" /><span class="slider"></span></label></div>
-      <div class="volume-setting"><span>مستوى الصوت</span><input type="range" id="set-volume" min="0" max="100" value="80" /><span id="volume-display">80%</span></div>
+      <div class="custom-setting" id="legendary-notif-row">
+        <span>إشعار الأسطوري</span>
+        <label class="toggle"><input type="checkbox" id="set-legendary-notif" checked /><span class="slider"></span></label>
+      </div>
+      <div class="custom-setting">
+        <span>المؤثرات الصوتية</span>
+        <label class="toggle"><input type="checkbox" id="set-sound-effects" checked /><span class="slider"></span></label>
+      </div>
+      <div class="custom-setting">
+        <span>الاهتزاز</span>
+        <label class="toggle"><input type="checkbox" id="set-vibration" checked /><span class="slider"></span></label>
+      </div>
+      <div class="custom-setting">
+        <span>إشعارات الدفع</span>
+        <label class="toggle"><input type="checkbox" id="set-push-notif" /><span class="slider"></span></label>
+      </div>
+      <div class="volume-setting">
+        <span>مستوى الصوت</span>
+        <input type="range" id="set-volume" min="0" max="100" value="80" />
+        <span id="volume-display">80%</span>
+      </div>
     </div>
   </div>
 
   <!-- المهام -->
   <div id="panel-missions" class="side-panel wide-panel hidden">
-    <div class="side-panel-header"><h3>المهام</h3><button class="panel-close" data-panel="panel-missions">&times;</button></div>
-    <div class="panel-tabs"><button class="panel-tab active" data-tab="missions-daily">يومية</button><button class="panel-tab" data-tab="missions-weekly">أسبوعية</button><button class="panel-tab" data-tab="missions-challenges">تحديات</button></div>
-    <div id="missions-daily" class="missions-panel panel-tab-content active"></div><div id="missions-weekly" class="missions-panel panel-tab-content hidden"></div><div id="missions-challenges" class="missions-panel panel-tab-content hidden"></div>
+    <div class="side-panel-header">
+      <h3>المهام</h3>
+      <button class="panel-close" data-panel="panel-missions">&times;</button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="missions-daily">يومية</button>
+      <button class="panel-tab" data-tab="missions-weekly">أسبوعية</button>
+      <button class="panel-tab" data-tab="missions-challenges">تحديات</button>
+    </div>
+    <div id="missions-daily" class="missions-panel panel-tab-content active"></div>
+    <div id="missions-weekly" class="missions-panel panel-tab-content hidden"></div>
+    <div id="missions-challenges" class="missions-panel panel-tab-content hidden"></div>
   </div>
 
   <!-- الكلانات -->
   <div id="panel-clans" class="side-panel wide-panel hidden">
-    <div class="side-panel-header"><h3>الكلانات</h3><button class="panel-close" data-panel="panel-clans">&times;</button></div>
-    <div id="clan-no-clan" class="clan-section"><div class="clan-join-section"><input id="clan-search-input" type="text" placeholder="ابحث عن كلان..." /><div id="clans-list" class="clans-list"></div></div><button id="btn-create-clan" class="btn btn-primary">إنشاء كلان (12+ / 3000 عملة)</button></div>
-    <div id="clan-my-clan" class="clan-section hidden"><div class="my-clan-header"><div class="clan-icon-display" id="my-clan-icon"></div><div><div class="my-clan-name" id="my-clan-name"></div><div class="my-clan-desc" id="my-clan-desc"></div><div class="my-clan-level" id="my-clan-level">المستوى 1</div><div class="my-clan-xp" id="my-clan-xp">0 / 100 XP</div></div></div><div class="my-clan-members" id="my-clan-members"></div><div class="my-clan-announcements" id="my-clan-announcements"></div><button id="btn-clan-announce" class="btn btn-sm btn-primary">إعلان</button><button id="btn-leave-clan" class="btn btn-danger btn-sm">مغادرة</button></div>
+    <div class="side-panel-header">
+      <h3>الكلانات</h3>
+      <button class="panel-close" data-panel="panel-clans">&times;</button>
+    </div>
+    <div id="clan-no-clan" class="clan-section">
+      <div class="clan-join-section">
+        <input id="clan-search-input" type="text" placeholder="ابحث عن كلان..." />
+        <div id="clans-list" class="clans-list"></div>
+      </div>
+      <button id="btn-create-clan" class="btn btn-primary">إنشاء كلان (12+ / 3000 عملة)</button>
+    </div>
+    <div id="clan-my-clan" class="clan-section hidden">
+      <div class="my-clan-header">
+        <div class="clan-icon-display" id="my-clan-icon"></div>
+        <div>
+          <div class="my-clan-name" id="my-clan-name"></div>
+          <div class="my-clan-desc" id="my-clan-desc"></div>
+          <div class="my-clan-level" id="my-clan-level">المستوى 1</div>
+          <div class="my-clan-xp" id="my-clan-xp">0 / 100 XP</div>
+        </div>
+      </div>
+      <div class="my-clan-members" id="my-clan-members"></div>
+      <div class="my-clan-announcements" id="my-clan-announcements"></div>
+      <button id="btn-clan-announce" class="btn btn-sm btn-primary">إعلان</button>
+      <button id="btn-leave-clan" class="btn btn-danger btn-sm">مغادرة</button>
+    </div>
   </div>
 
   <!-- الإشعارات -->
   <div id="panel-notifications" class="side-panel hidden">
-    <div class="side-panel-header"><h3>الإشعارات</h3><button class="btn-link" id="btn-read-all-notifs">تعليم الكل كمقروء</button><button class="panel-close" data-panel="panel-notifications">&times;</button></div>
+    <div class="side-panel-header">
+      <h3>الإشعارات</h3>
+      <button class="btn-link" id="btn-read-all-notifs">تعليم الكل كمقروء</button>
+      <button class="panel-close" data-panel="panel-notifications">&times;</button>
+    </div>
     <div id="notifications-list" class="notifications-list"></div>
   </div>
 
   <!-- السوق -->
   <div id="panel-market" class="side-panel wide-panel hidden">
-    <div class="side-panel-header"><h3>السوق</h3><button class="panel-close" data-panel="panel-market">&times;</button></div>
-    <div id="market-locked" class="market-locked hidden"><p>السوق يُفتح عند المستوى 8</p></div>
-    <div id="market-content" class="hidden"><div class="panel-tabs"><button class="panel-tab active" data-tab="market-skins">حزم</button><button class="panel-tab" data-tab="market-frames">إطارات</button><button class="panel-tab" data-tab="market-avatars">أفاتارات</button></div><div id="market-skins" class="market-grid panel-tab-content active"></div><div id="market-frames" class="market-grid panel-tab-content hidden"></div><div id="market-avatars" class="market-grid panel-tab-content hidden"></div></div>
+    <div class="side-panel-header">
+      <h3>السوق</h3>
+      <button class="panel-close" data-panel="panel-market">&times;</button>
+    </div>
+    <div id="market-locked" class="market-locked hidden">
+      <p>السوق يُفتح عند المستوى 8</p>
+    </div>
+    <div id="market-content" class="hidden">
+      <div class="panel-tabs">
+        <button class="panel-tab active" data-tab="market-skins">حزم</button>
+        <button class="panel-tab" data-tab="market-frames">إطارات</button>
+        <button class="panel-tab" data-tab="market-avatars">أفاتارات</button>
+      </div>
+      <div id="market-skins" class="market-grid panel-tab-content active"></div>
+      <div id="market-frames" class="market-grid panel-tab-content hidden"></div>
+      <div id="market-avatars" class="market-grid panel-tab-content hidden"></div>
+    </div>
   </div>
 
   <!-- الإعدادات -->
   <div id="panel-settings" class="side-panel hidden">
-    <div class="side-panel-header"><h3>الإعدادات</h3><button class="panel-close" data-panel="panel-settings">&times;</button></div>
+    <div class="side-panel-header">
+      <h3>الإعدادات</h3>
+      <button class="panel-close" data-panel="panel-settings">&times;</button>
+    </div>
     <div class="settings-section">
-      <div class="settings-group"><h4>الصوت</h4><div class="setting-row"><span>تشغيل الأصوات</span><label class="toggle"><input type="checkbox" id="settings-sound" checked /><span class="slider"></span></label></div><div class="setting-row"><span>مستوى الصوت</span><input type="range" id="settings-volume" min="0" max="100" value="80" class="range-input" /></div></div>
-      <div class="settings-group"><h4>الإشعارات</h4><div class="setting-row"><span>إشعار الأسطوري</span><label class="toggle"><input type="checkbox" id="settings-legendary" checked /><span class="slider"></span></label></div><div class="setting-row"><span>إشعارات الدفع</span><label class="toggle"><input type="checkbox" id="settings-push" /><span class="slider"></span></label></div></div>
-      <div class="settings-group"><h4>الحساب</h4><div class="player-id-display"><span>معرفك:</span><span id="settings-player-id" class="player-id-text">------</span><button id="btn-copy-id" class="btn-icon-small"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div><button id="btn-logout" class="btn btn-danger btn-sm">تسجيل الخروج</button></div>
+      <div class="settings-group">
+        <h4>الصوت</h4>
+        <div class="setting-row">
+          <span>تشغيل الأصوات</span>
+          <label class="toggle"><input type="checkbox" id="settings-sound" checked /><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span>مستوى الصوت</span>
+          <input type="range" id="settings-volume" min="0" max="100" value="80" class="range-input" />
+        </div>
+      </div>
+      <div class="settings-group">
+        <h4>الإشعارات</h4>
+        <div class="setting-row">
+          <span>إشعار الأسطوري</span>
+          <label class="toggle"><input type="checkbox" id="settings-legendary" checked /><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span>إشعارات الدفع</span>
+          <label class="toggle"><input type="checkbox" id="settings-push" /><span class="slider"></span></label>
+        </div>
+      </div>
+      <div class="settings-group">
+        <h4>الحساب</h4>
+        <div class="player-id-display">
+          <span>معرفك:</span>
+          <span id="settings-player-id" class="player-id-text">------</span>
+          <button id="btn-copy-id" class="btn-icon-small">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </button>
+        </div>
+        <button id="btn-logout" class="btn btn-danger btn-sm">تسجيل الخروج</button>
+      </div>
     </div>
   </div>
 
   <!-- الدردشة العامة -->
   <div id="panel-global-chat" class="side-panel hidden">
-    <div class="side-panel-header"><h3>الدردشة العامة</h3><button class="panel-close" data-panel="panel-global-chat">&times;</button></div>
+    <div class="side-panel-header">
+      <h3>الدردشة العامة</h3>
+      <button class="panel-close" data-panel="panel-global-chat">&times;</button>
+    </div>
     <div id="global-chat-messages" class="global-chat-messages"></div>
-    <div class="chat-input-row"><input id="global-chat-input" type="text" placeholder="اكتب رسالة..." maxlength="500" /><button id="btn-send-global-chat"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
+    <div class="chat-input-row">
+      <input id="global-chat-input" type="text" placeholder="اكتب رسالة..." maxlength="500" />
+      <button id="btn-send-global-chat">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13" />
+          <polygon points="22 2 15 22 11 13 2 9 22 2" />
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- لوحة المطور -->
   <div id="panel-devpanel" class="side-panel wide-panel hidden">
-    <div class="side-panel-header dev-header"><h3>لوحة القائد</h3><button class="panel-close" data-panel="panel-devpanel">&times;</button></div>
-    <div class="panel-tabs"><button class="panel-tab active" data-tab="dev-stats">إحصائيات</button><button class="panel-tab" data-tab="dev-players">لاعبون</button><button class="panel-tab" data-tab="dev-challenges">تحديات</button><button class="panel-tab" data-tab="dev-skins">بطاقات</button><button class="panel-tab" data-tab="dev-missions">مهام</button><button class="panel-tab" data-tab="dev-broadcast">إشعارات</button></div>
-    <div id="dev-stats" class="dev-section panel-tab-content active"><div class="stats-grid" id="dev-stats-grid"></div></div>
-    <div id="dev-players" class="dev-section panel-tab-content hidden"><div class="dev-search-row"><input id="dev-player-search" type="text" placeholder="ابحث..." /><button id="btn-dev-search-player" class="btn btn-sm btn-primary">بحث</button></div><div id="dev-players-result" class="dev-players-result"></div></div>
-    <div id="dev-challenges" class="dev-section panel-tab-content hidden"><button id="btn-new-challenge" class="btn btn-primary btn-sm">تحدي جديد</button><div id="dev-challenges-list" class="dev-list"></div></div>
-    <div id="dev-skins" class="dev-section panel-tab-content hidden"><button id="btn-new-skin" class="btn btn-primary btn-sm">حزمة جديدة</button><div id="dev-skins-list" class="dev-list"></div></div>
-    <div id="dev-missions" class="dev-section panel-tab-content hidden"><div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><select id="dev-mission-type" class="input-sm"><option value="daily">يومية</option><option value="weekly">أسبوعية</option></select><button id="btn-new-mission" class="btn btn-primary btn-sm">مهمة جديدة</button></div><div id="dev-missions-list" class="dev-list"></div></div>
-    <div id="dev-broadcast" class="dev-section panel-tab-content hidden"><div class="form-group" style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:8px;padding:12px;margin-bottom:12px"><label style="color:var(--blue)">رسالة خاصة</label><input id="dev-msg-player-id" type="text" placeholder="معرف اللاعب" class="input-sm" style="margin-top:8px;margin-bottom:8px" /><textarea id="dev-msg-content" rows="2" placeholder="نص الرسالة..." class="input-sm"></textarea><button class="btn btn-blue btn-sm" style="margin-top:8px" onclick="Admin.sendMessageToPlayer()">إرسال</button></div><div class="form-group"><label>إشعار</label><input id="dev-notif-player-id" type="text" placeholder="معرف اللاعب (اختياري)" class="input-sm" style="margin-bottom:8px" /><textarea id="dev-notif-msg" rows="3" placeholder="نص الإشعار..." class="input-sm"></textarea></div><button id="btn-dev-send-notif" class="btn btn-primary btn-sm">إرسال الإشعار</button><hr /><div class="form-group"><label>بث للجميع</label><textarea id="dev-broadcast-msg" rows="3" placeholder="رسالتك..." class="input-sm"></textarea></div><button id="btn-dev-broadcast" class="btn btn-primary">بث</button></div>
+    <div class="side-panel-header dev-header">
+      <h3>لوحة القائد</h3>
+      <button class="panel-close" data-panel="panel-devpanel">&times;</button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="dev-stats">إحصائيات</button>
+      <button class="panel-tab" data-tab="dev-players">لاعبون</button>
+      <button class="panel-tab" data-tab="dev-challenges">تحديات</button>
+      <button class="panel-tab" data-tab="dev-skins">بطاقات</button>
+      <button class="panel-tab" data-tab="dev-missions">مهام</button>
+      <button class="panel-tab" data-tab="dev-broadcast">إشعارات</button>
+    </div>
+    <div id="dev-stats" class="dev-section panel-tab-content active">
+      <div class="stats-grid" id="dev-stats-grid"></div>
+    </div>
+    <div id="dev-players" class="dev-section panel-tab-content hidden">
+      <div class="dev-search-row">
+        <input id="dev-player-search" type="text" placeholder="ابحث..." />
+        <button id="btn-dev-search-player" class="btn btn-sm btn-primary">بحث</button>
+      </div>
+      <div id="dev-players-result" class="dev-players-result"></div>
+    </div>
+    <div id="dev-challenges" class="dev-section panel-tab-content hidden">
+      <button id="btn-new-challenge" class="btn btn-primary btn-sm">تحدي جديد</button>
+      <div id="dev-challenges-list" class="dev-list"></div>
+    </div>
+    <div id="dev-skins" class="dev-section panel-tab-content hidden">
+      <button id="btn-new-skin" class="btn btn-primary btn-sm">حزمة جديدة</button>
+      <div id="dev-skins-list" class="dev-list"></div>
+    </div>
+    <div id="dev-missions" class="dev-section panel-tab-content hidden">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+        <select id="dev-mission-type" class="input-sm">
+          <option value="daily">يومية</option>
+          <option value="weekly">أسبوعية</option>
+        </select>
+        <button id="btn-new-mission" class="btn btn-primary btn-sm">مهمة جديدة</button>
+      </div>
+      <div id="dev-missions-list" class="dev-list"></div>
+    </div>
+    <div id="dev-broadcast" class="dev-section panel-tab-content hidden">
+      <!-- رسالة خاصة -->
+      <div class="form-group" style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:8px;padding:12px;margin-bottom:12px">
+        <label style="color:var(--blue)">رسالة خاصة</label>
+        <input id="dev-msg-player-id" type="text" placeholder="معرف اللاعب" class="input-sm" style="margin-top:8px;margin-bottom:8px" />
+        <textarea id="dev-msg-content" rows="2" placeholder="نص الرسالة..." class="input-sm"></textarea>
+        <button class="btn btn-blue btn-sm" style="margin-top:8px" onclick="Admin.sendMessageToPlayer()">إرسال</button>
+      </div>
+      <!-- إشعار -->
+      <div class="form-group">
+        <label>إشعار</label>
+        <input id="dev-notif-player-id" type="text" placeholder="معرف اللاعب (اختياري)" class="input-sm" style="margin-bottom:8px" />
+        <textarea id="dev-notif-msg" rows="3" placeholder="نص الإشعار..." class="input-sm"></textarea>
+      </div>
+      <button id="btn-dev-send-notif" class="btn btn-primary btn-sm">إرسال الإشعار</button>
+      <hr />
+      <div class="form-group">
+        <label>بث للجميع</label>
+        <textarea id="dev-broadcast-msg" rows="3" placeholder="رسالتك..." class="input-sm"></textarea>
+      </div>
+      <button id="btn-dev-broadcast" class="btn btn-primary">بث</button>
+    </div>
   </div>
 
   <!-- المستويات -->
   <div id="panel-levels" class="side-panel wide-panel hidden">
-    <div class="side-panel-header levels-header"><h3>مسار التطور</h3><button class="panel-close" data-panel="panel-levels">&times;</button></div>
-    <div class="levels-intro"><div class="levels-intro-info" id="levels-player-info">المستوى الحالي</div></div>
-    <div class="levels-tree-container" id="levels-tree"><div style="text-align:center;padding:40px;color:var(--text-dim)">جاري التحميل...</div></div>
+    <div class="side-panel-header levels-header">
+      <h3>مسار التطور</h3>
+      <button class="panel-close" data-panel="panel-levels">&times;</button>
+    </div>
+    <div class="levels-intro">
+      <div class="levels-intro-info" id="levels-player-info">المستوى الحالي</div>
+    </div>
+    <div class="levels-tree-container" id="levels-tree">
+      <div style="text-align:center;padding:40px;color:var(--text-dim)">جاري التحميل...</div>
+    </div>
+  </div>
+
+  <!-- تفاصيل المستوى -->
+  <div id="lvl-detail-popup" class="lvl-detail-popup hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="lvl-detail-card">
+      <button class="lvl-detail-close" onclick="document.getElementById('lvl-detail-popup').classList.add('hidden')">&times;</button>
+      <div class="lvl-detail-num" id="lvl-detail-num">المستوى 1</div>
+      <div class="lvl-detail-xp" id="lvl-detail-xp"></div>
+      <div class="lvl-detail-total" id="lvl-detail-total"></div>
+      <div class="lvl-detail-status" id="lvl-detail-status"></div>
+      <div class="lvl-detail-rewards-title">المكافآت</div>
+      <div class="lvl-detail-rewards" id="lvl-detail-rewards"></div>
+    </div>
   </div>
 
   <!-- ============================================================
@@ -764,12 +1418,39 @@
   <!-- التعليمات -->
   <div id="overlay-tutorial" class="overlay hidden">
     <div class="overlay-card tutorial-card">
-      <div class="tutorial-header"><h2>كيف تلعب؟</h2><button class="overlay-close" data-overlay="overlay-tutorial">&times;</button></div>
+      <div class="tutorial-header">
+        <h2>كيف تلعب؟</h2>
+        <button class="overlay-close" data-overlay="overlay-tutorial">&times;</button>
+      </div>
       <div class="tutorial-content">
-        <div class="tutorial-step"><div class="step-num">1</div><div class="step-text"><h4>الفريقان</h4><p>فريق أحمر وفريق أزرق. كل فريق فيه بوص وعملاء.</p></div></div>
-        <div class="tutorial-step"><div class="step-num">2</div><div class="step-text"><h4>دور البوص</h4><p>يرى الألوان ويعطي تلميحاً.</p></div></div>
-        <div class="tutorial-step"><div class="step-num">3</div><div class="step-text"><h4>دور العملاء</h4><p>يخمنون بناءً على التلميح.</p></div></div>
-        <div class="tutorial-step"><div class="step-num">4</div><div class="step-text"><h4>البطاقة السوداء</h4><p>خسارة فورية!</p></div></div>
+        <div class="tutorial-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <h4>الفريقان</h4>
+            <p>فريق أحمر وفريق أزرق. كل فريق فيه بوص وعملاء.</p>
+          </div>
+        </div>
+        <div class="tutorial-step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <h4>دور البوص</h4>
+            <p>يرى الألوان ويعطي تلميحاً.</p>
+          </div>
+        </div>
+        <div class="tutorial-step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <h4>دور العملاء</h4>
+            <p>يخمنون بناءً على التلميح.</p>
+          </div>
+        </div>
+        <div class="tutorial-step">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <h4>البطاقة السوداء</h4>
+            <p>خسارة فورية!</p>
+          </div>
+        </div>
       </div>
       <button class="btn btn-primary" data-overlay="overlay-tutorial">فهمت!</button>
     </div>
@@ -780,7 +1461,11 @@
     <div class="legendary-content">
       <div class="legendary-particles" id="legendary-particles"></div>
       <div class="legendary-avatar" id="legendary-avatar-display"></div>
-      <div class="legendary-crown"><svg width="40" height="40" viewBox="0 0 24 24" fill="#ffd700"><path d="M2 20h20l-2-12-5 6-3-8-3 8-5-6z"/></svg></div>
+      <div class="legendary-crown">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="#ffd700">
+          <path d="M2 20h20l-2-12-5 6-3-8-3 8-5-6z" />
+        </svg>
+      </div>
       <div class="legendary-name" id="legendary-player-name">---</div>
       <div class="legendary-label">دخل الغرفة!</div>
     </div>
@@ -793,7 +1478,10 @@
       <div class="game-over-title" id="game-over-title"></div>
       <div class="game-over-subtitle" id="game-over-subtitle"></div>
       <div class="game-over-stats" id="game-over-stats"></div>
-      <div class="game-over-actions"><button id="btn-play-again" class="btn btn-primary btn-glow">العب مرة أخرى</button><button id="btn-back-to-menu" class="btn btn-ghost">القائمة</button></div>
+      <div class="game-over-actions">
+        <button id="btn-play-again" class="btn btn-primary btn-glow">العب مرة أخرى</button>
+        <button id="btn-back-to-menu" class="btn btn-ghost">القائمة</button>
+      </div>
       <canvas id="fireworks-canvas" class="fireworks-canvas"></canvas>
     </div>
   </div>
@@ -803,7 +1491,10 @@
     <div class="overlay-card reconnect-card">
       <h3>إعادة الاتصال؟</h3>
       <p>وجدنا مباراة جارية. هل تريد الاستكمال؟</p>
-      <div class="reconnect-actions"><button id="btn-reconnect-yes" class="btn btn-primary">نعم</button><button id="btn-reconnect-no" class="btn btn-ghost">لا</button></div>
+      <div class="reconnect-actions">
+        <button id="btn-reconnect-yes" class="btn btn-primary">نعم</button>
+        <button id="btn-reconnect-no" class="btn btn-ghost">لا</button>
+      </div>
     </div>
   </div>
 
@@ -831,85 +1522,5 @@
   <script src="js/reconnection.js"></script>
   <script src="js/app.js"></script>
 
-  <script>
-    // ============================================================
-    // منطق الخطوات (Step-by-Step)
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      const steps = document.querySelectorAll('.register-step');
-      const dots = document.querySelectorAll('.step-dot');
-
-      function goToStep(stepNum) {
-        // إخفاء الكل
-        steps.forEach(s => s.classList.remove('active'));
-        dots.forEach(d => d.classList.remove('active'));
-
-        // إظهار المطلوب
-        const target = document.querySelector(`.register-step[data-step="${stepNum}"]`);
-        const dot = document.querySelector(`.step-dot[data-step="${stepNum}"]`);
-        if (target) target.classList.add('active');
-        if (dot) dot.classList.add('active');
-
-        // تحديث حالة النقاط السابقة
-        for (let i = 1; i < stepNum; i++) {
-          const prevDot = document.querySelector(`.step-dot[data-step="${i}"]`);
-          if (prevDot) prevDot.classList.add('done');
-        }
-        for (let i = stepNum; i <= dots.length; i++) {
-          const nextDot = document.querySelector(`.step-dot[data-step="${i}"]`);
-          if (nextDot) nextDot.classList.remove('done');
-        }
-      }
-
-      // أزرار "التالي"
-      document.querySelectorAll('.step-next').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const next = parseInt(this.dataset.next);
-          if (!isNaN(next)) goToStep(next);
-        });
-      });
-
-      // أزرار "السابق"
-      document.querySelectorAll('.step-prev').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const prev = parseInt(this.dataset.prev);
-          if (!isNaN(prev)) goToStep(prev);
-        });
-      });
-
-      // النقر على النقاط للانتقال
-      dots.forEach(dot => {
-        dot.addEventListener('click', function() {
-          const step = parseInt(this.dataset.step);
-          if (!isNaN(step)) goToStep(step);
-        });
-      });
-
-      // التهيئة - الخطوة 1
-      goToStep(1);
-
-      // التبديل بين التبويبات (تسجيل الدخول / إنشاء حساب)
-      document.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-          document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-          this.classList.add('active');
-          const target = this.dataset.tab;
-          document.getElementById('auth-panel-login').classList.toggle('hidden', target !== 'login');
-          document.getElementById('auth-panel-register').classList.toggle('hidden', target !== 'register');
-          // إعادة تعيين الخطوات عند العودة للتسجيل
-          if (target === 'register') goToStep(1);
-        });
-      });
-
-      // عند التبديل من تبويب التسجيل يدوياً
-      const registerTab = document.querySelector('.auth-tab[data-tab="register"]');
-      if (registerTab) {
-        registerTab.addEventListener('click', function() {
-          setTimeout(() => goToStep(1), 100);
-        });
-      }
-    });
-  </script>
-
 </body>
-                                                                                                                                                                                                       </html>
+          </html>
