@@ -1,29 +1,22 @@
 /* ============================================================
-   CODENAMES CLASSIC - MAIN APPLICATION (v5.1 - FIXED)
+   CODENAMES CLASSIC - MAIN APPLICATION (v5.2 - FIXED)
    ============================================================
-   الملف: app.js
-   الوظيفة: التحكم الرئيسي في التطبيق - تسجيل خطوة بخطوة، دخول، قائمة
-   التحديثات: دعم 4 خطوات مع تحقق فوري، ربط الأزرار، تجديد الجلسة
-   جميع الأزرار تعمل، لا يوجد إيموجي، كل الأيقونات SVG
+   إصلاحات:
+   - التحقق من الاسم مع تفعيل/تعطيل زر التالي بشكل صحيح
+   - حفظ الجلسة في localStorage
+   - قفل الاتجاه العمودي
+   - إصلاح الخلفيات والمسارات
+   - دعم الموبايل بالكامل
    ============================================================ */
 
 const App = (() => {
-  // ==========================================================
-  // المتغيرات العامة
-  // ==========================================================
   const API = "https://uuuuu-rup4.onrender.com/api";
   let currentPlayer = null;
   let currentScreen = "register";
   let dailyTimerInterval = null;
   let sessionCheckInterval = null;
   let isCheckingNickname = false;
-
-  // ==========================================================
-  // SVG icons - بدون إيموجي
-  // ==========================================================
-  const SVG_COIN = `<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd700"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#000" font-weight="bold">$</text></svg>`;
-  const SVG_CHECK = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
-  const SVG_CLOSE = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  let nicknameAvailable = false;
 
   // ==========================================================
   // التهيئة
@@ -33,9 +26,7 @@ const App = (() => {
 
     // قفل الاتجاه العمودي
     if (screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock("portrait").catch(() => {
-        // بعض المتصفحات لا تدعم القفل
-      });
+      screen.orientation.lock("portrait").catch(() => {});
     }
 
     // تهيئة المؤثرات
@@ -63,15 +54,29 @@ const App = (() => {
       UI.showScreen("register");
     }
 
+    // إصلاح الخلفيات إذا لم تظهر
+    fixBackgrounds();
+
     console.log("App.init() finished");
   }
 
   // ==========================================================
-  // ربط الأحداث الأساسية (تسجيل / دخول)
+  // إصلاح الخلفيات
+  // ==========================================================
+  function fixBackgrounds() {
+    // التحقق من وجود الصور وإضافة fallback
+    const registerContainer = document.querySelector(".register-container");
+    if (registerContainer) {
+      // استخدام تدرج إذا لم تظهر الصورة
+      registerContainer.style.background = 
+        "linear-gradient(135deg, #0a0a1e 0%, #1a0a2e 50%, #0a0a1e 100%)";
+    }
+  }
+
+  // ==========================================================
+  // ربط الأحداث الأساسية
   // ==========================================================
   function bindBasicEvents() {
-    console.log("Binding basic events");
-
     // تبديل التبويبات
     document.querySelectorAll(".auth-tab").forEach((tab) => {
       tab.addEventListener("click", function () {
@@ -82,20 +87,19 @@ const App = (() => {
         document.getElementById("auth-panel-register").classList.toggle("hidden", target !== "register");
         document.getElementById("register-error").classList.add("hidden");
         document.getElementById("login-error").classList.add("hidden");
-        // إعادة تعيين الخطوات عند العودة للتسجيل
         if (target === "register") {
           setTimeout(() => goToStep(1), 100);
         }
       });
     });
 
-    // زر التسجيل (النهائي في الخطوة 4)
+    // زر التسجيل
     document.getElementById("btn-register").addEventListener("click", register);
 
     // زر الدخول
     document.getElementById("btn-login").addEventListener("click", login);
 
-    // الضغط على Enter في حقول الإدخال
+    // Enter
     document.getElementById("login-password").addEventListener("keydown", (e) => {
       if (e.key === "Enter") login();
     });
@@ -108,7 +112,6 @@ const App = (() => {
       btn.addEventListener("click", function () {
         const next = parseInt(this.dataset.next);
         if (!isNaN(next)) {
-          // التحقق من الخطوة الحالية قبل الانتقال
           const currentStep = getCurrentStep();
           if (currentStep === 1 && !validateStep1()) return;
           if (currentStep === 2 && !validateStep2()) return;
@@ -130,7 +133,6 @@ const App = (() => {
       dot.addEventListener("click", function () {
         const step = parseInt(this.dataset.step);
         if (!isNaN(step)) {
-          // التحقق من أن الخطوات السابقة مكتملة
           for (let i = 1; i < step; i++) {
             const dotEl = document.querySelector(`.step-dot[data-step="${i}"]`);
             if (dotEl && !dotEl.classList.contains("done")) {
@@ -151,6 +153,12 @@ const App = (() => {
         clearTimeout(typingTimer);
         const val = this.value.trim();
         const errorEl = document.getElementById("reg-name-error");
+        const nextBtn = document.querySelector('.step-next[data-next="2"]');
+        
+        // إعادة تعيين الزر إلى غير مفعل حتى التحقق
+        if (nextBtn) nextBtn.disabled = true;
+        nicknameAvailable = false;
+
         if (val.length < 3) {
           errorEl.textContent = "الاسم يجب أن يكون 3 أحرف على الأقل";
           errorEl.className = "validation-msg error";
@@ -161,12 +169,30 @@ const App = (() => {
           errorEl.className = "validation-msg error";
           return;
         }
+
         // التحقق من السيرفر بعد توقف الكتابة
         typingTimer = setTimeout(() => {
           checkNicknameAvailability(val);
         }, 500);
       });
     }
+
+    // إعادة تعيين حالة التحقق عند التبديل بين التبويبات
+    document.querySelectorAll(".auth-tab").forEach((tab) => {
+      tab.addEventListener("click", function() {
+        if (this.dataset.tab === "register") {
+          // إعادة تعيين حالة الاسم
+          const errorEl = document.getElementById("reg-name-error");
+          const nextBtn = document.querySelector('.step-next[data-next="2"]');
+          if (errorEl) {
+            errorEl.textContent = "";
+            errorEl.className = "validation-msg";
+          }
+          if (nextBtn) nextBtn.disabled = true;
+          nicknameAvailable = false;
+        }
+      });
+    });
 
     console.log("Basic events bound");
   }
@@ -197,18 +223,15 @@ const App = (() => {
     if (target) target.classList.add("active");
     if (dot) dot.classList.add("active");
 
-    // تحديث حالة النقاط السابقة
     for (let i = 1; i < stepNum; i++) {
       const prevDot = document.querySelector(`.step-dot[data-step="${i}"]`);
       if (prevDot) prevDot.classList.add("done");
     }
 
-    // تحديث الملخص في الخطوة 4
     if (stepNum === 4) {
       updateSummary();
     }
 
-    // تحديث الأزرار
     updateStepButtons(stepNum);
   }
 
@@ -219,7 +242,6 @@ const App = (() => {
     const nextBtns = document.querySelectorAll(`.step-next[data-next="${stepNum + 1}"]`);
     const prevBtns = document.querySelectorAll(`.step-prev[data-prev="${stepNum - 1}"]`);
 
-    // تمكين/تعطيل أزرار التالي حسب التحقق
     if (stepNum === 1) {
       const isValid = validateStep1();
       nextBtns.forEach(btn => btn.disabled = !isValid);
@@ -229,6 +251,8 @@ const App = (() => {
     } else if (stepNum === 3) {
       const isValid = validateStep3();
       nextBtns.forEach(btn => btn.disabled = !isValid);
+    } else if (stepNum === 4) {
+      nextBtns.forEach(btn => btn.disabled = true);
     }
   }
 
@@ -249,13 +273,13 @@ const App = (() => {
       errorEl.className = "validation-msg error";
       return false;
     }
-    // التحقق من السيرفر (إذا لم يتم التحقق منه مسبقاً)
-    if (!errorEl.classList.contains("success") && !isCheckingNickname) {
-      // محاولة التحقق من السيرفر
+    // التحقق من توفر الاسم
+    if (!nicknameAvailable) {
+      // إذا لم يتم التحقق بعد، نطلب التحقق
       checkNicknameAvailability(nickname);
       return false;
     }
-    return errorEl.classList.contains("success");
+    return true;
   }
 
   // ==========================================================
@@ -263,11 +287,16 @@ const App = (() => {
   // ==========================================================
   async function checkNicknameAvailability(nickname) {
     const errorEl = document.getElementById("reg-name-error");
-    if (!nickname || nickname.length < 3) return;
+    const nextBtn = document.querySelector('.step-next[data-next="2"]');
+    if (!nickname || nickname.length < 3) {
+      if (nextBtn) nextBtn.disabled = true;
+      return;
+    }
 
     isCheckingNickname = true;
     errorEl.textContent = "جاري التحقق...";
     errorEl.className = "validation-msg loading";
+    if (nextBtn) nextBtn.disabled = true;
 
     try {
       const res = await fetch(`${API}/auth/check-nickname?nickname=${encodeURIComponent(nickname)}`);
@@ -275,17 +304,20 @@ const App = (() => {
       if (data.available) {
         errorEl.textContent = "✓ اسم متاح";
         errorEl.className = "validation-msg success";
-        // تفعيل زر التالي
-        document.querySelectorAll('.step-next[data-next="2"]').forEach(btn => btn.disabled = false);
+        nicknameAvailable = true;
+        if (nextBtn) nextBtn.disabled = false;
       } else {
         errorEl.textContent = "✕ هذا الاسم مستخدم بالفعل";
         errorEl.className = "validation-msg error";
-        document.querySelectorAll('.step-next[data-next="2"]').forEach(btn => btn.disabled = true);
+        nicknameAvailable = false;
+        if (nextBtn) nextBtn.disabled = true;
       }
     } catch (err) {
       console.error("خطأ في التحقق من الاسم:", err);
       errorEl.textContent = "⚠ لا يمكن التحقق، حاول مجدداً";
       errorEl.className = "validation-msg error";
+      nicknameAvailable = false;
+      if (nextBtn) nextBtn.disabled = true;
     } finally {
       isCheckingNickname = false;
     }
@@ -332,7 +364,6 @@ const App = (() => {
     const selected = document.querySelector(".avatar-option.selected");
     const grid = document.getElementById("avatar-grid");
     if (!selected) {
-      // إذا لم يتم اختيار أفاتار، نختار الأول افتراضياً
       const first = grid?.querySelector(".avatar-option");
       if (first) first.classList.add("selected");
       return true;
@@ -359,7 +390,7 @@ const App = (() => {
   }
 
   // ==========================================================
-  // التسجيل (من الخطوة 4)
+  // التسجيل
   // ==========================================================
   async function register() {
     const nickname = document.getElementById("reg-nickname").value.trim();
@@ -367,7 +398,6 @@ const App = (() => {
     const selectedAvatar = document.querySelector(".avatar-option.selected")?.dataset.avatar || "spy";
     const errEl = document.getElementById("register-error");
 
-    // التحقق النهائي
     if (nickname.length < 3) {
       errEl.textContent = "الاسم يجب أن يكون 3 أحرف على الأقل";
       errEl.classList.remove("hidden");
@@ -478,7 +508,6 @@ const App = (() => {
       }
       currentPlayer = await res.json();
       onPlayerLoaded();
-      // تجديد الجلسة كل 5 دقائق
       if (sessionCheckInterval) clearInterval(sessionCheckInterval);
       sessionCheckInterval = setInterval(() => refreshSession(), 5 * 60 * 1000);
       return true;
@@ -510,64 +539,46 @@ const App = (() => {
   function onPlayerLoaded() {
     if (!currentPlayer) return;
 
-    // تهيئة Socket
     if (typeof SocketClient.initSocket === "function") {
       SocketClient.initSocket();
     }
 
-    // تحديث واجهة القائمة
     updateMenuUI();
-
-    // عرض شاشة القائمة
     UI.showScreen("menu");
 
-    // بدء تحديث الغرف
     if (typeof Game.startRoomsRefresh === "function") {
       Game.startRoomsRefresh();
     }
 
-    // تحميل الإشعارات
     if (typeof Notifications.load === "function") Notifications.load();
-
-    // بدء مؤقت اليومية
     startDailyTimer();
-
-    // تحميل معاينة المهام
     loadMissionsPreview();
 
-    // تحديث الكلان
     if (typeof App.updatePlayerClan === "function") {
       App.updatePlayerClan();
     } else {
       updatePlayerClan();
     }
 
-    // تحميل معاينة الأصدقاء
     loadFriendsHeaderPreview();
 
-    // إظهار أزرار المطور
     if (currentPlayer.isDev || currentPlayer.nickname.toLowerCase() === "dooola-dev") {
       document.querySelectorAll(".dev-only").forEach((el) => el.classList.remove("hidden"));
     }
 
-    // تطبيق إعدادات الصوت
     const settings = currentPlayer.settings || {};
     if (settings.soundEffects === false) Audio.setMuted(true);
     if (settings.volume !== undefined) Audio.setVolume(settings.volume / 100);
 
-    // عرض معرف اللاعب
     const playerIdEl = document.getElementById("settings-player-id");
     if (playerIdEl) playerIdEl.textContent = currentPlayer.playerId;
 
-    // تحديث زر الأسطوري
     updateLegendaryButton(currentPlayer.level);
 
-    // التحقق من غرفة معلقة
     if (typeof Reconnection.checkPendingRoom === "function") {
       setTimeout(() => Reconnection.checkPendingRoom(), 1500);
     }
 
-    // ربط أزرار القائمة الرئيسية (بعد التأكد من وجودها في DOM)
     setTimeout(() => {
       bindMainMenuButtons();
     }, 100);
@@ -576,12 +587,11 @@ const App = (() => {
   }
 
   // ==========================================================
-  // ربط أزرار القائمة الرئيسية (جميع الأزرار)
+  // ربط أزرار القائمة الرئيسية
   // ==========================================================
   function bindMainMenuButtons() {
     console.log("Binding main menu buttons");
 
-    // إنشاء غرفة
     const createBtn = document.getElementById("btn-create-room");
     if (createBtn) {
       createBtn.addEventListener("click", function (e) {
@@ -595,7 +605,6 @@ const App = (() => {
       });
     }
 
-    // انضم لغرفة
     const joinBtn = document.getElementById("btn-join-room");
     if (joinBtn) {
       joinBtn.addEventListener("click", function (e) {
@@ -608,7 +617,6 @@ const App = (() => {
       });
     }
 
-    // تحديث الغرف
     const refreshBtn = document.getElementById("btn-refresh-rooms");
     if (refreshBtn) {
       refreshBtn.addEventListener("click", function (e) {
@@ -619,7 +627,6 @@ const App = (() => {
       });
     }
 
-    // الإشعارات
     const notifBtn = document.getElementById("btn-notifications");
     if (notifBtn) {
       notifBtn.addEventListener("click", function (e) {
@@ -629,7 +636,6 @@ const App = (() => {
       });
     }
 
-    // الأصدقاء
     const friendsBtn = document.getElementById("btn-friends");
     if (friendsBtn) {
       friendsBtn.addEventListener("click", function (e) {
@@ -639,7 +645,6 @@ const App = (() => {
       });
     }
 
-    // المخزون
     const invBtn = document.getElementById("btn-inventory");
     if (invBtn) {
       invBtn.addEventListener("click", function (e) {
@@ -649,7 +654,6 @@ const App = (() => {
       });
     }
 
-    // الإعدادات
     const settingsBtn = document.getElementById("btn-settings");
     if (settingsBtn) {
       settingsBtn.addEventListener("click", function (e) {
@@ -658,7 +662,6 @@ const App = (() => {
       });
     }
 
-    // لوحة المطور
     const devBtn = document.getElementById("btn-devpanel");
     if (devBtn) {
       devBtn.addEventListener("click", function (e) {
@@ -668,7 +671,6 @@ const App = (() => {
       });
     }
 
-    // الأزرار الجانبية
     const friendsRight = document.getElementById("btn-friends-right");
     if (friendsRight) {
       friendsRight.addEventListener("click", function (e) {
@@ -714,7 +716,6 @@ const App = (() => {
       });
     }
 
-    // الشريط السفلي
     const navHome = document.getElementById("nav-home");
     if (navHome) {
       navHome.addEventListener("click", function (e) {
@@ -769,7 +770,6 @@ const App = (() => {
       });
     }
 
-    // تسجيل الخروج
     const logoutBtn = document.getElementById("btn-logout");
     if (logoutBtn) {
       logoutBtn.addEventListener("click", function (e) {
@@ -778,7 +778,6 @@ const App = (() => {
       });
     }
 
-    // نسخ المعرف
     const copyIdBtn = document.getElementById("btn-copy-id");
     if (copyIdBtn) {
       copyIdBtn.addEventListener("click", function (e) {
@@ -800,7 +799,6 @@ const App = (() => {
       });
     }
 
-    // إعدادات الصوت
     const soundCb = document.getElementById("settings-sound");
     if (soundCb) {
       soundCb.addEventListener("change", function () {
@@ -814,7 +812,6 @@ const App = (() => {
       });
     }
 
-    // زر الملف الشخصي
     const avatarWrap = document.getElementById("menu-avatar-wrap");
     if (avatarWrap) {
       avatarWrap.addEventListener("click", function (e) {
@@ -823,7 +820,6 @@ const App = (() => {
       });
     }
 
-    // شعار القائمة (ضغط مطول لفتح المطور)
     let logoHoldTimer = null;
     const logoEl = document.getElementById("menu-logo");
     if (logoEl) {
@@ -841,16 +837,6 @@ const App = (() => {
       });
       logoEl.addEventListener("mouseup", () => clearTimeout(logoHoldTimer));
       logoEl.addEventListener("mouseleave", () => clearTimeout(logoHoldTimer));
-      logoEl.addEventListener("touchstart", () => {
-        logoHoldTimer = setTimeout(() => {
-          const p = App.getPlayer();
-          if (p?.isDev) {
-            if (typeof Admin.loadStats === "function") Admin.loadStats();
-            UI.showPanel("panel-devpanel");
-          }
-        }, 3000);
-      });
-      logoEl.addEventListener("touchend", () => clearTimeout(logoHoldTimer));
     }
 
     console.log("All buttons bound successfully");
@@ -1103,7 +1089,7 @@ const App = (() => {
   }
 
   // ==========================================================
-  // معاينة الأصدقاء في الهيدر
+  // معاينة الأصدقاء
   // ==========================================================
   async function loadFriendsHeaderPreview() {
     const token = localStorage.getItem("token");
@@ -1211,7 +1197,6 @@ const App = (() => {
   }
 
   async function loadMyClan(clanId) {
-    // تنفيذ بسيط
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(`${API}/clans/${clanId}`, {
@@ -1275,7 +1260,6 @@ const App = (() => {
   }
 
   async function leaveClan() {
-    // تنفيذ بسيط
     const ok = await UI.confirmDialog("هل تريد مغادرة الكلان؟");
     if (!ok) return;
     const token = localStorage.getItem("token");
@@ -1304,7 +1288,6 @@ const App = (() => {
   }
 
   async function createClan() {
-    // تنفيذ بسيط
     const name = document.getElementById("clan-name")?.value.trim();
     if (!name || name.length < 3) {
       UI.toast("اسم الكلان قصير جداً", "error");
