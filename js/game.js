@@ -1,8 +1,8 @@
 /* ============================================================
-   CODENAMES CLASSIC - GAME LOGIC (v3.2)
+   CODENAMES CLASSIC - GAME LOGIC (v8.0 - FULL)
    ============================================================
    الملف: game.js
-   الوظيفة: منطق اللعبة - إنشاء، انضمام، لعب، سولو، كلاسيك
+   الوظيفة: منطق اللعبة الكامل - إنشاء، انضمام، لعب، سولو، كلاسيك
    التحديثات: دعم السولو، تأكيد/إلغاء اختيار البطاقات، إشعار أسطوري، لا إيموجي
    ============================================================ */
 
@@ -24,13 +24,12 @@ const Game = (() => {
   let roomsInterval = null;
 
   // SVG icons - بدون إيموجي
+  const SVG_CHECK = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const SVG_CROSS = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
   const SVG_LOCK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
-  const SVG_CHECK = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
-  const SVG_CROSS = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  const SVG_PLUS = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
   const SVG_TROPHY = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v5"/><path d="M6 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M4 21h16"/><path d="M8 21v-4a4 4 0 0 1 8 0v4"/></svg>`;
   const SVG_SKULL = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="9" cy="10" r="1.5"/><circle cx="15" cy="10" r="1.5"/><path d="M10 16a2 2 0 0 1 4 0"/><path d="M8 16l-2 2"/><path d="M16 16l2 2"/></svg>`;
-  const SVG_PLUS = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
-  const SVG_CHAT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
 
   // ==========================================================
   // قائمة الغرف العامة
@@ -96,7 +95,7 @@ const Game = (() => {
   }
 
   // ==========================================================
-  // إنشاء غرفة
+  // إنشاء غرفة (عبر Socket.io)
   // ==========================================================
   function createRoom() {
     const name = document.getElementById("create-room-name").value.trim();
@@ -207,7 +206,7 @@ const Game = (() => {
   }
 
   // ==========================================================
-  // دعوة صديق
+  // دعوة صديق للغرفة
   // ==========================================================
   function inviteFriend(targetPlayerId) {
     if (!currentRoom) {
@@ -511,7 +510,7 @@ const Game = (() => {
       const tempSelected = card.tempRevealed ? "temp-selected" : "";
       const tempAvatar = card.tempRevealed && card.tempPlayerId ? `
         <div class="temp-avatar">
-          <img src="/assets/avatars/spy.png" alt="temp" />
+          <img src="assets/avatars/spy.png" alt="temp" />
         </div>
       ` : "";
 
@@ -723,6 +722,7 @@ const Game = (() => {
         code: currentRoom?.code,
         word,
         count: parseInt(count),
+        cardIds: [],
       });
     } else {
       socket?.emit("send_hint", {
@@ -792,3 +792,258 @@ const Game = (() => {
       setTimeout(() => App.refreshPlayer(), 2000);
     }
   }
+
+  function playAgain() {
+    UI.hideOverlay("overlay-game-over");
+    if (currentRoom) {
+      UI.showScreen("lobby");
+    } else {
+      UI.showScreen("menu");
+      startRoomsRefresh();
+    }
+  }
+
+  function leaveGame() {
+    const socket = SocketClient.getSocket();
+    socket?.emit("leave_room", { code: currentRoom?.code });
+    Reconnection.clearPendingRoom();
+    currentRoom = null;
+    gameState = null;
+    UI.hideOverlay("overlay-game-over");
+    UI.showScreen("menu");
+    startRoomsRefresh();
+  }
+
+  // ==========================================================
+  // الدردشة والسجل
+  // ==========================================================
+  function sendGameChat() {
+    const input = document.getElementById("chat-input");
+    const channel = document.getElementById("chat-channel")?.value || "all";
+    if (!input?.value.trim()) return;
+    const socket = SocketClient.getSocket();
+    socket?.emit("room_chat", {
+      code: currentRoom?.code,
+      message: input.value.trim(),
+      channel,
+    });
+    input.value = "";
+  }
+
+  function sendLobbyChat() {
+    const input = document.getElementById("lobby-chat-input");
+    if (!input?.value.trim()) return;
+    const socket = SocketClient.getSocket();
+    socket?.emit("room_chat", {
+      code: currentRoom?.code,
+      message: input.value.trim(),
+      channel: "all",
+    });
+    input.value = "";
+  }
+
+  function onRoomChat(data) {
+    const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    const msgHtml = `
+      <div class="lobby-chat-msg">
+        <span class="lobby-chat-msg-name">${data.from}</span>
+        ${data.title ? `<span class="msg-title">(${data.title})</span>` : ''}
+        <span>${data.message}</span>
+        <span class="chat-bubble-time">${time}</span>
+      </div>
+    `;
+
+    const lobbyChat = document.getElementById("lobby-chat-messages");
+    if (lobbyChat) {
+      lobbyChat.insertAdjacentHTML("beforeend", msgHtml);
+      lobbyChat.scrollTop = lobbyChat.scrollHeight;
+    }
+
+    const gameChat = document.getElementById("game-chat-all");
+    if (gameChat) {
+      gameChat.insertAdjacentHTML("beforeend", msgHtml);
+      gameChat.scrollTop = gameChat.scrollHeight;
+    }
+
+    if (data.channel === "team") {
+      const teamChat = document.getElementById("game-chat-team");
+      if (teamChat && data.team === myTeam) {
+        teamChat.insertAdjacentHTML("beforeend", msgHtml);
+        teamChat.scrollTop = teamChat.scrollHeight;
+      }
+    }
+  }
+
+  // ==========================================================
+  // تحديثات UI
+  // ==========================================================
+  function updateScores(scores) {
+    const redEl = document.getElementById("red-score");
+    const blueEl = document.getElementById("blue-score");
+    const redLeft = document.getElementById("red-cards-left");
+    const blueLeft = document.getElementById("blue-cards-left");
+    if (redEl) redEl.textContent = scores?.red || 0;
+    if (blueEl) blueEl.textContent = scores?.blue || 0;
+    if (redLeft) redLeft.textContent = scores?.redTotal ? `${scores.red}/${scores.redTotal}` : "";
+    if (blueLeft) blueLeft.textContent = scores?.blueTotal ? `${scores.blue}/${scores.blueTotal}` : "";
+  }
+
+  function updateTeamPanels(teams) {
+    const myId = App.getPlayer()?.playerId;
+    const renderMembers = (elId, members, team) => {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      el.innerHTML = (members || []).map((p) => `
+        <div class="team-member">
+          <div class="${team === "red" ? "member-dot-red" : "member-dot-blue"}"></div>
+          <span>${p.nickname}</span>
+          ${p.role === "spymaster" ? '<span class="member-role-badge">بوص</span>' : ''}
+          ${p.playerId === myId ? '<span class="member-is-you">(أنت)</span>' : ''}
+          ${p.title ? `<span class="member-title">${p.title}</span>` : ''}
+        </div>
+      `).join("");
+    };
+    const allRed = [teams?.red?.spymaster, ...(teams?.red?.operatives || [])].filter(Boolean);
+    const allBlue = [teams?.blue?.spymaster, ...(teams?.blue?.operatives || [])].filter(Boolean);
+    renderMembers("red-team-members", allRed, "red");
+    renderMembers("blue-team-members", allBlue, "blue");
+  }
+
+  function updateTurnDisplay(turn, team) {
+    const teamEl = document.getElementById("turn-team-text");
+    if (!teamEl) return;
+    teamEl.textContent = team === "red" ? "الفريق الأحمر" : "الفريق الأزرق";
+    teamEl.className = `turn-team ${team}`;
+  }
+
+  // ==========================================================
+  // سجل اللعبة
+  // ==========================================================
+  function addLogEntry(text, type = "") {
+    const log = document.getElementById("game-log");
+    if (!log) return;
+    const time = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    const entry = document.createElement("div");
+    entry.className = `log-entry ${type}`;
+    entry.innerHTML = `<span class="log-time">${time}</span><span>${text}</span>`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function clearGameLog() {
+    const log = document.getElementById("game-log");
+    if (log) log.innerHTML = "";
+    const chatAll = document.getElementById("game-chat-all");
+    if (chatAll) chatAll.innerHTML = "";
+    const chatTeam = document.getElementById("game-chat-team");
+    if (chatTeam) chatTeam.innerHTML = "";
+  }
+
+  // ==========================================================
+  // تبويبات اللعبة
+  // ==========================================================
+  function bindGameLogTabs() {
+    document.querySelectorAll(".log-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const tabName = tab.dataset.tab;
+        document.querySelectorAll(".log-tab").forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById("game-log")?.classList.add("hidden");
+        document.getElementById("game-chat-all")?.classList.add("hidden");
+        document.getElementById("game-chat-team")?.classList.add("hidden");
+        const target = tabName === "log" ? "game-log" : tabName === "chat-all" ? "game-chat-all" : "game-chat-team";
+        document.getElementById(target)?.classList.remove("hidden");
+      });
+    });
+  }
+
+  // ==========================================================
+  // دوال إضافية للتوافق
+  // ==========================================================
+  function updateCardCountOptions(mode) {
+    // تم تنفيذها في app.js
+  }
+
+  function onGameModeChange(mode) {
+    // تم تنفيذها في app.js
+  }
+
+  function kickFromTeam(team) {
+    UI.toast("سيتم تطوير هذه الميزة قريباً", "info");
+  }
+
+  function kickFromSolo() {
+    UI.toast("سيتم تطوير هذه الميزة قريباً", "info");
+  }
+
+  function onYourTurn(data) {
+    // يتم استدعاؤها من socket-client
+    if (data.hint) {
+      UI.toast(`التلميح: ${data.hint} (${data.count})`, "info");
+    }
+  }
+
+  // ==========================================================
+  // تصدير الواجهة العامة
+  // ==========================================================
+  return {
+    // الغرف
+    startRoomsRefresh,
+    stopRoomsRefresh,
+    fetchPublicRooms,
+    updateRoomsList,
+    createRoom,
+    joinRoom,
+    quickJoin,
+    leaveLobby,
+
+    // اللوبي
+    updateLobbyUI,
+    chooseTeamRole,
+    startGame,
+    showInviteFriendsPanel,
+    inviteFriend,
+
+    // اللعبة
+    onGameStarted,
+    onReconnected,
+    onGameUpdate,
+    onSpymasterView,
+    onHintReceived,
+    onCardRevealed,
+    onTurnChanged,
+    onGameOver,
+    onYourTurn,
+    playAgain,
+    leaveGame,
+
+    // الدردشة
+    sendGameChat,
+    sendLobbyChat,
+    onRoomChat,
+
+    // البطاقات
+    onCardClick,
+    confirmCard,
+    cancelCard,
+    endOperativeTurn,
+
+    // التلميح
+    sendHint,
+    endTurn,
+
+    // أخرى
+    bindGameLogTabs,
+    updateCardCountOptions,
+    onGameModeChange,
+    kickFromTeam,
+    kickFromSolo,
+  };
+})();
+
+// ==========================================================
+// تصدير للاستخدام العالمي
+// ==========================================================
+window.Game = Game;
+
+console.log("Game module loaded successfully");
